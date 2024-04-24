@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -13,15 +14,19 @@ type KeyMap struct {
 	Down  key.Binding
 	Left  key.Binding
 	Right key.Binding
+	Help  key.Binding
 	Quit  key.Binding
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Up, k.Down, k.Left, k.Right, k.Quit}
+	return []key.Binding{k.Help, k.Quit}
 }
 
 func (k KeyMap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{k.ShortHelp()}
+	return [][]key.Binding{
+		{k.Up, k.Down, k.Left, k.Right},
+		{k.Help, k.Quit},
+	}
 }
 
 func initializeBoard(board [][]uint16) ([][]uint16, error) {
@@ -48,10 +53,12 @@ func initializeBoard(board [][]uint16) ([][]uint16, error) {
 
 type Model struct {
 	Keys  KeyMap
+	Help  help.Model
 	Board [][]uint16
 }
 
 func (m Model) process(msg tea.Msg) {
+	m.Board[0][1] = 20
 	// @TODO game logic
 }
 
@@ -70,12 +77,14 @@ func NewModel(boardWidth uint8, boardHeight uint8) Model {
 
 	return Model{
 		Keys: KeyMap{
-			Up:    key.NewBinding(key.WithKeys("k", "up", "w"), key.WithHelp("↑/k/w", "up")),
-			Down:  key.NewBinding(key.WithKeys("j", "down", "s"), key.WithHelp("↑/j/s", "down")),
-			Left:  key.NewBinding(key.WithKeys("h", "left", "a"), key.WithHelp("↑/h/a", "left")),
-			Right: key.NewBinding(key.WithKeys("l", "right", "d"), key.WithHelp("↑/l/d", "right")),
+			Up:    key.NewBinding(key.WithKeys("k", "up", "w"), key.WithHelp("↑/k/w", "move up")),
+			Down:  key.NewBinding(key.WithKeys("j", "down", "s"), key.WithHelp("↑/j/s", "move down")),
+			Left:  key.NewBinding(key.WithKeys("h", "left", "a"), key.WithHelp("↑/h/a", "move left")),
+			Right: key.NewBinding(key.WithKeys("l", "right", "d"), key.WithHelp("↑/l/d", "move right")),
+			Help:  key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
 			Quit:  key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q/ctrl+c", "quit")),
 		},
+		Help:  help.New(),
 		Board: board,
 	}
 }
@@ -90,11 +99,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.Keys.Quit):
 			return m, tea.Quit
+		case key.Matches(msg, m.Keys.Help):
+			m.Help.ShowAll = !m.Help.ShowAll
 		case key.Matches(msg, m.Keys.Up, m.Keys.Down, m.Keys.Left, m.Keys.Right):
 			m.process(msg)
 		}
 	case tea.WindowSizeMsg:
 		// @TODO handle this
+		m.Help.Width = msg.Width
 	}
 
 	return m, nil
@@ -110,15 +122,5 @@ func (m Model) View() string {
 		s += "\n"
 	}
 
-	s += "\n"
-	for i, k := range m.Keys.ShortHelp() {
-		separator := ""
-		if i%2 == 1 {
-			separator = "\n"
-		}
-
-		s += fmt.Sprint(k.Help().Key, " ", separator)
-	}
-
-	return s
+	return s + m.Help.View(m.Keys)
 }
