@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type KeyMap struct {
@@ -113,14 +114,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	s := ""
+	cellStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("#888888")).
+		PaddingLeft(1).
+		PaddingRight(1).
+		Width(3).
+		Height(1)
 
-	for x := range m.Board {
-		for _, v := range m.Board[x] {
-			s += fmt.Sprint(v, " ")
+	var boardRows []string
+	for y := range m.Board[0] {
+		var row []string
+		for x := range m.Board {
+			cell := fmt.Sprint(m.Board[x][y])
+			row = append(row, cellStyle.Render(cell))
 		}
-		s += "\n"
+		boardRows = append(boardRows, lipgloss.JoinHorizontal(lipgloss.Top, row...))
 	}
 
-	return s + m.Help.View(m.Keys)
+	boardView := lipgloss.JoinVertical(lipgloss.Left, boardRows...)
+
+	return boardView + "\n\n" + m.Help.View(m.Keys)
 }
