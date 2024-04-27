@@ -2,6 +2,7 @@ package twenty48
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -183,6 +184,8 @@ func (m Model) process(msg tea.Msg) {
 		var err error
 		m.Board, err = addSquare(m.Board)
 		if err != nil {
+			// @TODO loop over each cell and check if its adjacent cells == current
+			// if atleast one is true then dont set finished to true
 			m.Finished = true
 		}
 	}
@@ -198,7 +201,7 @@ func NewModel() Model {
 		board, err = addSquare(board)
 		if err != nil {
 			// @TODO handle this gracefully
-			panic(fmt.Errorf("board had no empty spaces at initialization"))
+			panic(err)
 		}
 	}
 
@@ -244,12 +247,9 @@ func (m Model) View() string {
 	status := ""
 
 	cellStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#888888")).
-		PaddingLeft(1).
-		PaddingRight(1).
-		Width(3).
-		Height(1)
+		Padding(1, 0).
+		Width(7).
+		Align(lipgloss.Center)
 
 	if m.Finished {
 		status = "u lose"
@@ -258,8 +258,10 @@ func (m Model) View() string {
 		for y := range m.Board[0] {
 			var row []string
 			for x := range m.Board {
-				cell := fmt.Sprint(m.Board[x][y])
-				row = append(row, cellStyle.Render(cell))
+				cell := m.Board[x][y]
+				color := lipgloss.Color(fmt.Sprint(math.Log2(float64(cell))))
+				cellString := fmt.Sprint(cell)
+				row = append(row, cellStyle.Background(color).Render(cellString))
 			}
 
 			boardRows = append(boardRows, lipgloss.JoinHorizontal(lipgloss.Top, row...))
