@@ -1,4 +1,4 @@
-module games
+module github.com/CelestialCrafter/games
 
 go 1.22.2
 

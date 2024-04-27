@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 
+	"github.com/CelestialCrafter/games/metadata"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -270,4 +271,20 @@ func (m Model) View() string {
 	}
 
 	return fmt.Sprintf("%v\n%v\n\n%v", board, status, m.Help.View(m.Keys))
+}
+
+func (m Model) GetMetadata() metadata.Metadata {
+	logo := lipgloss.NewStyle().
+		Background(lipgloss.Color("#ffcc33")).
+		BorderForeground(lipgloss.Color("#ffcc33")).
+		Align(lipgloss.Center).
+		Padding(3, 5).
+		Margin(1, 1).
+		Render("2048")
+
+	return metadata.Metadata{
+		Name:     "2048",
+		Features: []string{},
+		Icon:     logo,
+	}
 }
