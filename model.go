@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"math"
+	"strings"
+	"unicode"
 
 	twenty48 "github.com/CelestialCrafter/games/2048"
 	"github.com/CelestialCrafter/games/metadata"
@@ -64,7 +67,7 @@ func NewModel() Model {
 			twenty48.NewModel(),
 			twenty48.NewModel(),
 		},
-		RowLength: 10,
+		RowLength: 5,
 	}
 }
 
@@ -88,13 +91,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.SelectedGame++
 		case key.Matches(msg, m.Keys.Left):
 			m.SelectedGame--
-
 		}
 
 		m.SelectedGame = min(max(m.SelectedGame, 0), len(m.Games)-1)
 	case tea.WindowSizeMsg:
-		// @TODO handle this
-		m.RowLength = msg.Width / metadata.ICON_WIDTH
+		// -1 is to account for margin
+		m.RowLength = msg.Width/metadata.ICON_WIDTH - 1
 		m.Help.Width = msg.Width
 	}
 
@@ -102,22 +104,38 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	menuSlice := make([]string, len(m.Games))
-	for i := 0; i < len(menuSlice); i++ {
-		menuSlice[i] = m.Games[i].GetMetadata().Icon
+	selectedBar := fmt.Sprintf(
+		"\n%v", lipgloss.NewStyle().
+			Width(metadata.ICON_WIDTH).
+			Height(1).
+			Margin(0, 1).
+			Render(strings.Repeat("━", metadata.ICON_WIDTH)),
+	)
+
+	rowAmount := int(math.Ceil(float64(len(m.Games)) / float64(m.RowLength)))
+	menu := make([][]string, rowAmount)
+	for i := range menu {
+		menu[i] = make([]string, m.RowLength)
+	}
+
+	menuRows := make([]string, rowAmount)
+
+	for i := 0; i < len(m.Games); i++ {
+		currentRow := int(math.Floor(float64(i) / float64(m.RowLength)))
+		currentColumn := i % m.RowLength
+		current := &menu[currentRow][currentColumn]
+
+		*current = m.Games[i].GetMetadata().Icon
 		if m.SelectedGame == i {
-			menuSlice[i] += fmt.Sprintf(
-				"\n%v", lipgloss.NewStyle().
-					Width(metadata.ICON_WIDTH).
-					Background(lipgloss.Color("#fff")).
-					Height(1).
-					Margin(0, 1).
-					Render(""),
-			)
+			*current = strings.TrimRightFunc(*current, unicode.IsSpace) + selectedBar
 		}
 	}
 
-	menu := lipgloss.JoinHorizontal(lipgloss.Top, menuSlice...)
+	for i := 0; i < len(menu); i++ {
+		menuRows[i] = lipgloss.JoinHorizontal(lipgloss.Top, menu[i]...)
+	}
 
-	return fmt.Sprintf("%v\n%v", menu, m.Help.View(m.Keys))
+	menuString := lipgloss.JoinVertical(lipgloss.Left, menuRows...)
+
+	return fmt.Sprintf("%v\n%v", menuString, m.Help.View(m.Keys))
 }
