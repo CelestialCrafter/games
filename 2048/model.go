@@ -137,7 +137,7 @@ type Model struct {
 func (m Model) process(msg tea.Msg) {
 	changed := false
 
-	left := func() {
+	up := func() {
 		var board [][]uint16
 		board, changed1 := push(m.Board)
 		board, changed2 := merge(board)
@@ -151,21 +151,21 @@ func (m Model) process(msg tea.Msg) {
 	}
 
 	right := func() {
-		m.Board = rotate90(rotate90(m.Board))
-		left()
-		m.Board = rotateN90(rotateN90(m.Board))
+		m.Board = rotate90(m.Board)
+		up()
+		m.Board = rotateN90(m.Board)
 	}
 
-	up := func() {
+	left := func() {
 		m.Board = rotateN90(m.Board)
-		left()
+		up()
 		m.Board = rotate90(m.Board)
 	}
 
 	down := func() {
-		m.Board = rotate90(m.Board)
-		left()
-		m.Board = rotateN90(m.Board)
+		m.Board = rotate90(rotate90(m.Board))
+		up()
+		m.Board = rotateN90(rotateN90(m.Board))
 	}
 
 	switch {
@@ -261,6 +261,7 @@ func (m Model) View() string {
 				cell := fmt.Sprint(m.Board[x][y])
 				row = append(row, cellStyle.Render(cell))
 			}
+
 			boardRows = append(boardRows, lipgloss.JoinHorizontal(lipgloss.Top, row...))
 			board = lipgloss.JoinVertical(lipgloss.Left, boardRows...)
 		}
