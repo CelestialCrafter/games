@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	program := tea.NewProgram(twenty48.NewModel(8, 8))
+	program := tea.NewProgram(twenty48.NewModel())
 	_, err := program.Run()
 	if err != nil {
 		panic(err)

@@ -30,50 +30,176 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 	}
 }
 
-func initializeBoard(board [][]uint16) ([][]uint16, error) {
-	if len(board) <= 0 {
-		return nil, fmt.Errorf("expected board width to be > 0, got %v", len(board))
+func addSquare(board [][]uint16) ([][]uint16, error) {
+	empty := make([]*uint16, 0)
+
+	for x := 0; x < len(board); x++ {
+		for y := 0; y < len(board[0]); y++ {
+			c := &board[x][y]
+			if *c == 0 {
+				empty = append(empty, c)
+			}
+		}
 	}
 
-	if len(board[0]) <= 0 {
-		return nil, fmt.Errorf("expected board height to be > 0, got %v", len(board[0]))
+	if len(empty) <= 0 {
+		return board, fmt.Errorf("no empty spaces in board")
 	}
 
-	for i := range 2 {
-		_ = i
-		x := rand.Intn(len(board))
-		y := rand.Intn(len(board[0]))
-
-		v := (rand.Intn(2) + 1) * 2
-
-		board[x][y] = uint16(v)
-	}
+	*empty[rand.Intn(len(empty))] = uint16((rand.Intn(2) + 1) * 2)
 
 	return board, nil
 }
 
+func reverse(matrix [][]uint16) [][]uint16 {
+	for i, j := 0, len(matrix)-1; i < j; i, j = i+1, j-1 {
+		matrix[i], matrix[j] = matrix[j], matrix[i]
+	}
+
+	return matrix
+}
+
+func transpose(matrix [][]uint16) [][]uint16 {
+	for i := 0; i < len(matrix); i++ {
+		for j := 0; j < i; j++ {
+			matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
+		}
+	}
+
+	return matrix
+}
+
+func rotate90(matrix [][]uint16) [][]uint16 {
+	return transpose(reverse(matrix))
+}
+
+func rotateN90(matrix [][]uint16) [][]uint16 {
+	return reverse(transpose(matrix))
+}
+
+func createBoard(w int, h int) [][]uint16 {
+	board := make([][]uint16, w)
+	for i := range board {
+		board[i] = make([]uint16, h)
+	}
+
+	return board
+}
+
+func push(board [][]uint16) ([][]uint16, bool) {
+	newBoard := createBoard(len(board), len(board[0]))
+	changed := false
+
+	for i := 0; i < len(board); i++ {
+		position := 0
+		for j := 0; j < len(board[0]); j++ {
+			current := &board[i][j]
+			next := &newBoard[i][position]
+
+			if *current != 0 {
+				*next = *current
+				if j != position {
+					changed = true
+				}
+				position++
+			}
+		}
+	}
+
+	return newBoard, changed
+}
+
+func merge(board [][]uint16) ([][]uint16, bool) {
+	changed := false
+
+	for i := 0; i < len(board); i++ {
+		for j := 0; j < len(board)-1; j++ {
+			current := &board[i][j]
+			next := &board[i][j+1]
+			if *current == *next && *current != 0 {
+				*current = *current * 2
+				*next = 0
+				changed = true
+			}
+		}
+	}
+
+	return board, changed
+}
+
 type Model struct {
-	Keys  KeyMap
-	Help  help.Model
-	Board [][]uint16
+	Keys     KeyMap
+	Help     help.Model
+	Board    [][]uint16
+	Finished bool
 }
 
 func (m Model) process(msg tea.Msg) {
-	m.Board[0][1] = 20
-	// @TODO game logic
-}
+	changed := false
 
-func NewModel(boardWidth uint8, boardHeight uint8) Model {
-	board := make([][]uint16, boardWidth)
-	for i := range board {
-		board[i] = make([]uint16, boardHeight)
+	left := func() {
+		var board [][]uint16
+		board, changed1 := push(m.Board)
+		board, changed2 := merge(board)
+		board, _ = push(board)
+
+		if changed1 || changed2 {
+			changed = true
+		}
+
+		copy(m.Board, board)
 	}
 
-	board, err := initializeBoard(board)
+	right := func() {
+		m.Board = rotate90(rotate90(m.Board))
+		left()
+		m.Board = rotateN90(rotateN90(m.Board))
+	}
 
-	if err != nil {
-		// @TODO handle this error
-		panic(err)
+	up := func() {
+		m.Board = rotateN90(m.Board)
+		left()
+		m.Board = rotate90(m.Board)
+	}
+
+	down := func() {
+		m.Board = rotate90(m.Board)
+		left()
+		m.Board = rotateN90(m.Board)
+	}
+
+	switch {
+	case key.Matches(msg.(tea.KeyMsg), m.Keys.Up):
+		up()
+	case key.Matches(msg.(tea.KeyMsg), m.Keys.Down):
+		down()
+	case key.Matches(msg.(tea.KeyMsg), m.Keys.Left):
+		left()
+	case key.Matches(msg.(tea.KeyMsg), m.Keys.Right):
+		right()
+	}
+
+	if changed {
+		var err error
+		m.Board, err = addSquare(m.Board)
+		if err != nil {
+			m.Finished = true
+		}
+	}
+}
+
+func NewModel() Model {
+	board := createBoard(4, 4)
+
+	for i := range 2 {
+		_ = i
+
+		var err error
+		board, err = addSquare(board)
+		if err != nil {
+			// @TODO handle this gracefully
+			panic(fmt.Errorf("board had no empty spaces at initialization"))
+		}
 	}
 
 	return Model{
@@ -114,6 +240,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+	board := ""
+	status := ""
+
 	cellStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("#888888")).
@@ -122,17 +251,20 @@ func (m Model) View() string {
 		Width(3).
 		Height(1)
 
-	var boardRows []string
-	for y := range m.Board[0] {
-		var row []string
-		for x := range m.Board {
-			cell := fmt.Sprint(m.Board[x][y])
-			row = append(row, cellStyle.Render(cell))
+	if m.Finished {
+		status = "u lose"
+	} else {
+		var boardRows []string
+		for y := range m.Board[0] {
+			var row []string
+			for x := range m.Board {
+				cell := fmt.Sprint(m.Board[x][y])
+				row = append(row, cellStyle.Render(cell))
+			}
+			boardRows = append(boardRows, lipgloss.JoinHorizontal(lipgloss.Top, row...))
+			board = lipgloss.JoinVertical(lipgloss.Left, boardRows...)
 		}
-		boardRows = append(boardRows, lipgloss.JoinHorizontal(lipgloss.Top, row...))
 	}
 
-	boardView := lipgloss.JoinVertical(lipgloss.Left, boardRows...)
-
-	return boardView + "\n\n" + m.Help.View(m.Keys)
+	return fmt.Sprintf("%v\n%v\n\n%v", board, status, m.Help.View(m.Keys))
 }
