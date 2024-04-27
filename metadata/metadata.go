@@ -8,4 +8,5 @@ type Metadata struct {
 	Icon string
 	// loading, saving, and any other common features the game may support
 	Features []string
+	ID       uint
 }

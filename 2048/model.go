@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 
+	"github.com/CelestialCrafter/games/game"
 	"github.com/CelestialCrafter/games/metadata"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -130,10 +131,10 @@ func merge(board [][]uint16) ([][]uint16, bool) {
 }
 
 type Model struct {
-	Keys     KeyMap
-	Help     help.Model
-	Board    [][]uint16
-	Finished bool
+	keys     KeyMap
+	help     help.Model
+	board    [][]uint16
+	finished bool
 }
 
 func (m Model) process(msg tea.Msg) {
@@ -141,7 +142,7 @@ func (m Model) process(msg tea.Msg) {
 
 	up := func() {
 		var board [][]uint16
-		board, changed1 := push(m.Board)
+		board, changed1 := push(m.board)
 		board, changed2 := merge(board)
 		board, _ = push(board)
 
@@ -149,45 +150,45 @@ func (m Model) process(msg tea.Msg) {
 			changed = true
 		}
 
-		copy(m.Board, board)
+		copy(m.board, board)
 	}
 
 	right := func() {
-		m.Board = rotate90(m.Board)
+		m.board = rotate90(m.board)
 		up()
-		m.Board = rotateN90(m.Board)
+		m.board = rotateN90(m.board)
 	}
 
 	left := func() {
-		m.Board = rotateN90(m.Board)
+		m.board = rotateN90(m.board)
 		up()
-		m.Board = rotate90(m.Board)
+		m.board = rotate90(m.board)
 	}
 
 	down := func() {
-		m.Board = rotate90(rotate90(m.Board))
+		m.board = rotate90(rotate90(m.board))
 		up()
-		m.Board = rotateN90(rotateN90(m.Board))
+		m.board = rotateN90(rotateN90(m.board))
 	}
 
 	switch {
-	case key.Matches(msg.(tea.KeyMsg), m.Keys.Up):
+	case key.Matches(msg.(tea.KeyMsg), m.keys.Up):
 		up()
-	case key.Matches(msg.(tea.KeyMsg), m.Keys.Down):
+	case key.Matches(msg.(tea.KeyMsg), m.keys.Down):
 		down()
-	case key.Matches(msg.(tea.KeyMsg), m.Keys.Left):
+	case key.Matches(msg.(tea.KeyMsg), m.keys.Left):
 		left()
-	case key.Matches(msg.(tea.KeyMsg), m.Keys.Right):
+	case key.Matches(msg.(tea.KeyMsg), m.keys.Right):
 		right()
 	}
 
 	if changed {
 		var err error
-		m.Board, err = addSquare(m.Board)
+		m.board, err = addSquare(m.board)
 		if err != nil {
 			// @TODO loop over each cell and check if its adjacent cells == current
 			// if atleast one is true then dont set finished to true
-			m.Finished = true
+			m.finished = true
 		}
 	}
 }
@@ -207,7 +208,7 @@ func NewModel() Model {
 	}
 
 	return Model{
-		Keys: KeyMap{
+		keys: KeyMap{
 			Up:    key.NewBinding(key.WithKeys("k", "up", "w"), key.WithHelp("↑/k/w", "move up")),
 			Down:  key.NewBinding(key.WithKeys("j", "down", "s"), key.WithHelp("↑/j/s", "move down")),
 			Left:  key.NewBinding(key.WithKeys("h", "left", "a"), key.WithHelp("↑/h/a", "move left")),
@@ -215,8 +216,8 @@ func NewModel() Model {
 			Help:  key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
 			Quit:  key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q/ctrl+c", "quit")),
 		},
-		Help:  help.New(),
-		Board: board,
+		help:  help.New(),
+		board: board,
 	}
 }
 
@@ -228,16 +229,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, m.Keys.Quit):
-			return m, tea.Quit
-		case key.Matches(msg, m.Keys.Help):
-			m.Help.ShowAll = !m.Help.ShowAll
-		case key.Matches(msg, m.Keys.Up, m.Keys.Down, m.Keys.Left, m.Keys.Right):
+		case key.Matches(msg, m.keys.Quit):
+			return m, func() tea.Msg {
+				return game.QuitMsg{}
+			}
+		case key.Matches(msg, m.keys.Help):
+			m.help.ShowAll = !m.help.ShowAll
+		case key.Matches(msg, m.keys.Up, m.keys.Down, m.keys.Left, m.keys.Right):
 			m.process(msg)
 		}
 	case tea.WindowSizeMsg:
 		// @TODO handle this
-		m.Help.Width = msg.Width
+		m.help.Width = msg.Width
 	}
 
 	return m, nil
@@ -252,14 +255,14 @@ func (m Model) View() string {
 		Width(7).
 		Align(lipgloss.Center)
 
-	if m.Finished {
+	if m.finished {
 		status = "u lose"
 	} else {
 		var boardRows []string
-		for y := range m.Board[0] {
+		for y := range m.board[0] {
 			var row []string
-			for x := range m.Board {
-				cell := m.Board[x][y]
+			for x := range m.board {
+				cell := m.board[x][y]
 				color := lipgloss.Color(fmt.Sprint(math.Log2(float64(cell))))
 				cellString := fmt.Sprint(cell)
 				row = append(row, cellStyle.Background(color).Render(cellString))
@@ -270,10 +273,10 @@ func (m Model) View() string {
 		}
 	}
 
-	return fmt.Sprintf("%v\n%v\n\n%v", board, status, m.Help.View(m.Keys))
+	return fmt.Sprintf("%v\n%v\n\n%v", board, status, m.help.View(m.keys))
 }
 
-func (m Model) GetMetadata() metadata.Metadata {
+func GetMetadata() metadata.Metadata {
 	logo := lipgloss.NewStyle().
 		Background(lipgloss.Color("#ffcc33")).
 		BorderForeground(lipgloss.Color("#ffcc33")).
@@ -286,5 +289,6 @@ func (m Model) GetMetadata() metadata.Metadata {
 		Name:     "2048",
 		Features: []string{},
 		Icon:     logo,
+		ID:       1,
 	}
 }
