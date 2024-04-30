@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/CelestialCrafter/games/game"
+	common "github.com/CelestialCrafter/games/common"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -10,13 +10,13 @@ type EmptyModel struct {
 
 func (m EmptyModel) Init() tea.Cmd {
 	return func() tea.Msg {
-		return game.QuitMsg{}
+		return common.BackMsg{}
 	}
 }
 
 func (m EmptyModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, func() tea.Msg {
-		return game.QuitMsg{}
+		return common.BackMsg{}
 	}
 }
 

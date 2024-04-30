@@ -1,4 +1,4 @@
-package metadata
+package common
 
 const ICON_WIDTH, ICON_HEIGHT = 14, 7
 

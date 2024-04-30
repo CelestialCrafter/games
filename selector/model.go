@@ -7,7 +7,7 @@ import (
 	"unicode"
 
 	twenty48 "github.com/CelestialCrafter/games/2048"
-	"github.com/CelestialCrafter/games/metadata"
+	common "github.com/CelestialCrafter/games/common"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,13 +15,10 @@ import (
 )
 
 type KeyMap struct {
-	Up    key.Binding
-	Down  key.Binding
-	Left  key.Binding
-	Right key.Binding
-	Play  key.Binding
-	Help  key.Binding
-	Quit  key.Binding
+	common.ArrowsKeyMap
+	Play key.Binding
+	Help key.Binding
+	Quit key.Binding
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
@@ -42,7 +39,7 @@ type PlayMsg struct {
 type Model struct {
 	keys          KeyMap
 	help          help.Model
-	gamesMetadata []metadata.Metadata
+	gamesMetadata []common.Metadata
 	selectedGame  int
 	rowLength     int
 }
@@ -50,16 +47,13 @@ type Model struct {
 func NewModel() Model {
 	return Model{
 		keys: KeyMap{
-			Up:    key.NewBinding(key.WithKeys("k", "up", "w"), key.WithHelp("↑/k/w", "move up")),
-			Down:  key.NewBinding(key.WithKeys("j", "down", "s"), key.WithHelp("↑/j/s", "move down")),
-			Left:  key.NewBinding(key.WithKeys("h", "left", "a"), key.WithHelp("↑/h/a", "move left")),
-			Right: key.NewBinding(key.WithKeys("l", "right", "d"), key.WithHelp("↑/l/d", "move right")),
-			Play:  key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "play game")),
-			Help:  key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
-			Quit:  key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q/ctrl+c", "quit")),
+			ArrowsKeyMap: common.NewArrowsKeyMap(),
+			Quit:         key.NewBinding(key.WithKeys("q"), key.WithHelp("q", "quit")),
+			Play:         key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "play game")),
+			Help:         key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
 		},
 		help: help.New(),
-		gamesMetadata: []metadata.Metadata{
+		gamesMetadata: []common.Metadata{
 			twenty48.GetMetadata(),
 		},
 		rowLength: 5,
@@ -97,7 +91,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.selectedGame = min(max(m.selectedGame, 0), len(m.gamesMetadata)-1)
 	case tea.WindowSizeMsg:
 		// -1 is to account for margin
-		m.rowLength = msg.Width/metadata.ICON_WIDTH - 1
+		m.rowLength = msg.Width/common.ICON_WIDTH - 1
 		m.help.Width = msg.Width
 	}
 
@@ -107,10 +101,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	selectedBar := fmt.Sprintf(
 		"\n%v", lipgloss.NewStyle().
-			Width(metadata.ICON_WIDTH).
+			Width(common.ICON_WIDTH).
 			Height(1).
 			Margin(0, 1).
-			Render(strings.Repeat("━", metadata.ICON_WIDTH)),
+			Render(strings.Repeat("━", common.ICON_WIDTH)),
 	)
 
 	rowAmount := int(math.Ceil(float64(len(m.gamesMetadata)) / float64(m.rowLength)))
