@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"time"
 
-	twenty48 "github.com/CelestialCrafter/games/2048"
 	"github.com/CelestialCrafter/games/common"
+	twenty48 "github.com/CelestialCrafter/games/games/2048"
 	"github.com/CelestialCrafter/games/selector"
 	"github.com/CelestialCrafter/games/styles"
 	"github.com/charmbracelet/bubbles/key"
@@ -52,10 +52,6 @@ type MainModel struct {
 }
 
 func NewModel(db *sqlx.DB, userID string) MainModel {
-	if userID == "" {
-		db = nil
-	}
-
 	return MainModel{
 		state:    selectorView,
 		selector: selector.NewModel(),
@@ -115,53 +111,48 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.gameID = msg.GameID
 		m.game = NewGame(m.gameID)
 
-		if m.db != nil {
-			// @TODO multiple save files w a save manager
-			saves := []save{}
-			saveFile := 0
+		// @TODO multiple save files w a save manager
+		saves := []save{}
+		saveFile := 0
 
-			err := m.db.Select(&saves, "SELECT data from games WHERE id=?", fmt.Sprintf("%v-%v-%v", m.userID, m.gameID, saveFile))
-			if err != nil {
-				log.Error("couldnt load from database", "error", err)
-				return m, func() tea.Msg {
-					return common.ErrorMsg{
-						Err:    fmt.Errorf("couldnt load save: %v", err),
-						Action: nil,
-					}
+		err := m.db.Select(&saves, "SELECT data from games WHERE id=?", fmt.Sprintf("%v-%v-%v", m.userID, m.gameID, saveFile))
+		if err != nil {
+			log.Error("couldnt load from database", "error", err)
+			return m, func() tea.Msg {
+				return common.ErrorMsg{
+					Err:    fmt.Errorf("couldnt load save: %v", err),
+					Action: nil,
 				}
 			}
+		}
 
-			if len(saves) > 0 {
-				// @TODO multiple save files
-				return m, func() tea.Msg {
-					return common.LoadMsg{
-						Data: []byte(saves[0].Data),
-					}
+		if len(saves) > 0 {
+			// @TODO multiple save files
+			return m, func() tea.Msg {
+				return common.LoadMsg{
+					Data: []byte(saves[0].Data),
 				}
 			}
 		}
 	case common.SaveMsg:
 		// @TODO offload this to save model
-		if m.db != nil {
+		saveFile := 0
 
-			saveFile := 0
-
-			_, err := m.db.Exec(`
+		_, err := m.db.Exec(`
 				INSERT INTO games VALUES($1,$2,$3)
 					ON CONFLICT(id) DO UPDATE SET data=$2;`,
-				fmt.Sprintf("%v-%v-%v", m.userID, m.gameID, saveFile),
-				// @TODO escape the save data
-				string(msg.Data),
-				time.Now(),
-			)
+			fmt.Sprintf("%v-%v-%v", m.userID, m.gameID, saveFile),
+			// @TODO escape the save data
+			string(msg.Data),
+			time.Now(),
+		)
 
-			if err != nil {
-				log.Error("couldnt save to database", "error", err)
-				return m, func() tea.Msg {
-					return common.ErrorMsg{
-						Err:    fmt.Errorf("couldnt save: %v", err),
-						Action: nil,
-					}
+		if err != nil {
+			log.Error("couldnt save to database", "error", err)
+			return m, func() tea.Msg {
+				return common.ErrorMsg{
+					Err:    fmt.Errorf("couldnt save: %v", err),
+					Action: nil,
 				}
 			}
 		}

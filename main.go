@@ -49,8 +49,8 @@ func createTeaHandler(db *sqlx.DB) func(sess ssh.Session) (tea.Model, []tea.Prog
 	}
 }
 
-func startProgram() {
-	_, err := tea.NewProgram(NewModel(nil, "")).Run()
+func startProgram(db *sqlx.DB) {
+	_, err := tea.NewProgram(NewModel(db, "default")).Run()
 	if err != nil {
 		log.Error("Could not start program", "error", err)
 	}
@@ -111,6 +111,6 @@ func main() {
 	if len(os.Args) >= 2 && os.Args[1] == "ssh" {
 		startSSH(db)
 	} else {
-		startProgram()
+		startProgram(db)
 	}
 }
