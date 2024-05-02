@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"reflect"
-	"time"
 
 	"github.com/CelestialCrafter/games/common"
 	twenty48 "github.com/CelestialCrafter/games/games/2048"
+	"github.com/CelestialCrafter/games/save"
 	"github.com/CelestialCrafter/games/selector"
 	"github.com/CelestialCrafter/games/styles"
 	"github.com/charmbracelet/bubbles/key"
@@ -22,14 +22,6 @@ const (
 	selectorView sessionState = iota
 	gameView
 )
-
-type save struct {
-	Id           int       `db:"id"`
-	GameId       int       `db:"game_id"`
-	UserId       int       `db:"user_id"`
-	Data         string    `db:"data"`
-	LastSaveTime time.Time `db:"last_save_time"`
-}
 
 type KeyMap struct {
 	common.ArrowsKeyMap
@@ -88,7 +80,6 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
-			// error handling
 		case m.err != nil && key.Matches(msg, m.keys.Left):
 			m.selected = max(m.selected-1, 0)
 		case m.err != nil && key.Matches(msg, m.keys.Right):
@@ -111,49 +102,9 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.gameID = msg.GameID
 		m.game = NewGame(m.gameID)
 
-		// @TODO multiple save files w a save manager
-		saves := []save{}
-		saveFile := 0
-
-		err := m.db.Select(&saves, "SELECT data from games WHERE id=?", fmt.Sprintf("%v-%v-%v", m.userID, m.gameID, saveFile))
-		if err != nil {
-			log.Error("couldnt load from database", "error", err)
-			return m, func() tea.Msg {
-				return common.ErrorMsg{
-					Err:    fmt.Errorf("couldnt load save: %v", err),
-					Action: nil,
-				}
-			}
-		}
-
-		if len(saves) > 0 {
-			// @TODO multiple save files
-			return m, func() tea.Msg {
-				return common.LoadMsg{
-					Data: []byte(saves[0].Data),
-				}
-			}
-		}
-	case common.SaveMsg:
-		// @TODO offload this to save model
-		saveFile := 0
-
-		_, err := m.db.Exec(`
-				INSERT INTO games VALUES($1,$2,$3)
-					ON CONFLICT(id) DO UPDATE SET data=$2;`,
-			fmt.Sprintf("%v-%v-%v", m.userID, m.gameID, saveFile),
-			// @TODO escape the save data
-			string(msg.Data),
-			time.Now(),
-		)
-
-		if err != nil {
-			log.Error("couldnt save to database", "error", err)
-			return m, func() tea.Msg {
-				return common.ErrorMsg{
-					Err:    fmt.Errorf("couldnt save: %v", err),
-					Action: nil,
-				}
+		return m, func() tea.Msg {
+			return save.TryLoad{
+				ID: m.gameID,
 			}
 		}
 	case common.ErrorMsg:

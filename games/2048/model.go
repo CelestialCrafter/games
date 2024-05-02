@@ -26,7 +26,7 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 	}
 }
 
-type save struct {
+type gameSave struct {
 	Board [][]uint16
 }
 

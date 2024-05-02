@@ -37,6 +37,10 @@ func createTeaHandler(db *sqlx.DB) func(sess ssh.Session) (tea.Model, []tea.Prog
 		if key == nil {
 			log.Error("Key was nil (enable PublicKeyAuth middleware?)")
 			sess.Write([]byte("You need to ssh in with a public key!"))
+			err := sess.Close()
+			if err != nil {
+				log.Error("Couldnt close session due to nil key", "error", err)
+			}
 		}
 
 		keyType := key.Type()
@@ -103,10 +107,19 @@ func main() {
 
 	_ = db.MustExec(`
 		CREATE TABLE IF NOT EXISTS games (
-		id TEXT NOT NULL UNIQUE PRIMARY KEY,
+		game_id INTEGER PRIMARY KEY,
+		owner_id TEXT NOT NULL,
+		game INTEGER NOT NULL,
 		data TEXT NOT NULL,
+		save INTEGER DEFAULT 0,
 		last_save_time TIME NOT NULL
-	)`)
+	) STRICT`)
+
+	_ = db.MustExec(`
+		CREATE TABLE IF NOT EXISTS users (
+		user_id TEXT NOT NULL PRIMARY KEY,
+		username TEXT
+	) STRICT`)
 
 	if len(os.Args) >= 2 && os.Args[1] == "ssh" {
 		startSSH(db)
