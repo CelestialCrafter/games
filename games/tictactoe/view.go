@@ -1,5 +1,5 @@
 package tictactoe
 
 func (m Model) View() string {
-	return ""
+	return m.help.View(m.keys)
 }
