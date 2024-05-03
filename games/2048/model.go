@@ -68,7 +68,9 @@ func GetMetadata() common.Metadata {
 		Background(lipgloss.Color("#ffcc33")).
 		BorderForeground(lipgloss.Color("#ffcc33")).
 		Align(lipgloss.Center).
-		Padding(3, 5).
+		Padding(3, 6).
+		// this has weird positioning and it annoys me
+		PaddingRight(5).
 		Margin(1, 2).
 		Render("2048")
 

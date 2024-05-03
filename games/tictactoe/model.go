@@ -19,15 +19,15 @@ func (m Model) Init() tea.Cmd {
 }
 
 func GetMetadata() common.Metadata {
-	r1 := "─┘─└─\n"
-	r2 := "─┤─├─\n"
-	r3 := "─┐─┌─\n"
+	r1 := "_|_|_\n"
+	r2 := "_|_|_\n"
+	r3 := " | | "
 	board := fmt.Sprint(r1, r2, r3)
 
 	logo := lipgloss.NewStyle().
 		Background(lipgloss.Color("1")).
 		Align(lipgloss.Center).
-		Padding(1, 5).
+		Padding(2, 5).
 		Margin(1, 2).
 		Render(board)
 

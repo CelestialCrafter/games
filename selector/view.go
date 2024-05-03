@@ -34,7 +34,7 @@ func (m Model) View() string {
 		"\n%v", lipgloss.NewStyle().
 			Width(common.ICON_WIDTH+2).
 			Height(1).
-			MarginLeft(1).
+			Margin(1).
 			Foreground(lipgloss.Color("2")).
 			Render(strings.Repeat("━", common.ICON_WIDTH+2)),
 	)
