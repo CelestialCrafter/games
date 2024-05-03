@@ -63,6 +63,7 @@ func NewModel(username string) Model {
 			twenty48.GetMetadata(),
 			twenty48.GetMetadata(),
 		},
+		// initial value till tea.WindowSizeMsg gets emitted
 		rowLength: 5,
 		username:  username,
 	}
