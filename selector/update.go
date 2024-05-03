@@ -15,7 +15,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Play):
 			return m, func() tea.Msg {
 				return PlayMsg{
-					GameID: m.gamesMetadata[m.selectedGame].ID,
+					ID: m.gamesMetadata[m.selectedGame].ID,
 				}
 			}
 		case key.Matches(msg, m.keys.Help):
@@ -35,6 +35,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// -1 is to account for margin
 		m.rowLength = msg.Width/common.ICON_WIDTH - 1
 		m.help.Width = msg.Width
+		m.width = msg.Width
+		m.height = msg.Height
 	}
 
 	return m, nil

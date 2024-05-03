@@ -1,7 +1,10 @@
 package save
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/CelestialCrafter/games/common"
@@ -32,20 +35,34 @@ type save struct {
 }
 
 type Model struct {
-	db     *sqlx.DB
-	userID string
+	db       *sqlx.DB
+	userKey  string
+	username string
 }
 
-func NewModel(db *sqlx.DB, userID string) Model {
+func NewModel(db *sqlx.DB, userKey string, username string) Model {
 	return Model{
 		db,
-		userID,
+		userKey,
+		username,
 	}
 }
 
 func (m Model) Init() tea.Cmd {
-	// @TODO create user if they dont exist
-	_, err := m.db.Exec("INSERT INTO users(user_id) VALUES($1);", m.userID)
+	// if username is blank, just insert the user
+	// else, upsert the username to the current one
+	upsert := " ON CONFLICT(user_id) DO UPDATE SET username=$2;"
+	ignore := " OR IGNORE"
+	if m.username == "" {
+		upsert = ";"
+	} else {
+		ignore = ""
+	}
+
+	_, err := m.db.Exec(fmt.Sprintf("INSERT%v INTO users(user_id,username) VALUES($1,$2)%v", ignore, upsert),
+		m.userKey,
+		m.username,
+	)
 
 	if err != nil {
 		log.Error("couldnt create user", "error", err)
@@ -65,11 +82,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SaveMsg:
 		saveFile := 0
+		h := sha1.New()
+		io.WriteString(h, fmt.Sprintf("%v-%v-%v", m.userKey, msg.ID, saveFile))
 
 		_, err := m.db.Exec(`
-				INSERT INTO games(owner_id,game,data,save,last_save_time) VALUES($1,$2,$3,$4,$5)
-					ON CONFLICT(id) DO UPDATE SET data=$2;`,
-			m.userID,
+				INSERT INTO games(game_id,owner_id,game,data,save,last_save_time) VALUES($1,$2,$3,$4,$5,$6)
+					ON CONFLICT(game_id) DO UPDATE SET data=$2;`,
+			hex.EncodeToString(h.Sum(nil)),
+			m.userKey,
 			msg.ID,
 			// @TODO escape the save data
 			string(msg.Data),
@@ -87,11 +107,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case TryLoad:
-		// @TODO multiple save files w a save manager
-		save := save{}
+		// @TODO multiple save files
+		save := []save{}
 		saveFile := 0
 
-		err := m.db.Get(&save, "SELECT data from games WHERE owner_id=$1 AND game=$2 AND save=$3;", m.userID, msg.ID, saveFile)
+		err := m.db.Select(&save, "SELECT data from games WHERE owner_id=$1 AND game=$2 AND save=$3;", m.userKey, msg.ID, saveFile)
 		if err != nil {
 			log.Error("couldnt load save from database", "error", err)
 			return m, func() tea.Msg {
@@ -102,10 +122,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-		// @TODO multiple save files
-		return m, func() tea.Msg {
-			return LoadMsg{
-				Data: []byte(save.Data),
+		if len(save) > 0 {
+			return m, func() tea.Msg {
+				return LoadMsg{
+					Data: []byte(save[0].Data),
+				}
 			}
 		}
 	}

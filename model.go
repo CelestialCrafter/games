@@ -31,31 +31,27 @@ type KeyMap struct {
 
 type MainModel struct {
 	state    sessionState
+	save     tea.Model
 	selector tea.Model
 	game     tea.Model
 	keys     KeyMap
-	db       *sqlx.DB
-	userID   string
-	gameID   uint
 	err      *common.ErrorMsg
 	selected int
 	width    int
 	height   int
 }
 
-func NewModel(db *sqlx.DB, userID string) MainModel {
+func NewModel(db *sqlx.DB, userKey string, username string) MainModel {
 	return MainModel{
 		state:    selectorView,
-		selector: selector.NewModel(),
+		save:     save.NewModel(db, userKey, username),
+		selector: selector.NewModel(username),
 		game:     nil,
 		keys: KeyMap{
 			ArrowsKeyMap: common.NewArrowsKeyMap(),
 			Select:       key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select")),
 			Quit:         key.NewBinding(key.WithKeys("ctrl+c"), key.WithHelp("ctrl+c", "quit")),
 		},
-		db:     db,
-		gameID: 0,
-		userID: userID,
 	}
 }
 
@@ -69,7 +65,7 @@ func NewGame(id uint) tea.Model {
 }
 
 func (m MainModel) Init() tea.Cmd {
-	return nil
+	return tea.Batch(m.save.Init(), m.selector.Init())
 }
 
 func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -99,14 +95,13 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.game = nil
 	case selector.PlayMsg:
 		m.state = gameView
-		m.gameID = msg.GameID
-		m.game = NewGame(m.gameID)
+		m.game = NewGame(msg.ID)
 
-		return m, func() tea.Msg {
+		return m, tea.Batch(func() tea.Msg {
 			return save.TryLoad{
-				ID: m.gameID,
+				ID: msg.ID,
 			}
-		}
+		}, m.game.Init())
 	case common.ErrorMsg:
 		if msg.Err != nil {
 			log.Error("game sent error message", "error", msg.Err)
@@ -115,6 +110,11 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+	}
+
+	m.save, cmd = m.save.Update(msg)
+	if cmd != nil {
+		return m, cmd
 	}
 
 	switch m.state {

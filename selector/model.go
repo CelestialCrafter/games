@@ -27,7 +27,7 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 }
 
 type PlayMsg struct {
-	GameID uint
+	ID uint
 }
 
 type Model struct {
@@ -36,9 +36,12 @@ type Model struct {
 	gamesMetadata []common.Metadata
 	selectedGame  int
 	rowLength     int
+	username      string
+	width         int
+	height        int
 }
 
-func NewModel() Model {
+func NewModel(username string) Model {
 	return Model{
 		keys: KeyMap{
 			ArrowsKeyMap: common.NewArrowsKeyMap(),
@@ -49,8 +52,19 @@ func NewModel() Model {
 		help: help.New(),
 		gamesMetadata: []common.Metadata{
 			twenty48.GetMetadata(),
+			twenty48.GetMetadata(),
+			twenty48.GetMetadata(),
+			twenty48.GetMetadata(),
+			twenty48.GetMetadata(),
+			twenty48.GetMetadata(),
+			twenty48.GetMetadata(),
+			twenty48.GetMetadata(),
+			twenty48.GetMetadata(),
+			twenty48.GetMetadata(),
+			twenty48.GetMetadata(),
 		},
 		rowLength: 5,
+		username:  username,
 	}
 }
 

@@ -46,7 +46,7 @@ func createTeaHandler(db *sqlx.DB) func(sess ssh.Session) (tea.Model, []tea.Prog
 		keyType := key.Type()
 		keyData := hex.EncodeToString(key.Marshal())
 
-		m := NewModel(db, fmt.Sprintf("%v-%v", keyType, keyData))
+		m := NewModel(db, fmt.Sprintf("%v-%v", keyType, keyData), sess.User())
 		renderer := bubbletea.MakeRenderer(sess)
 		lipgloss.SetDefaultRenderer(renderer)
 		return m, []tea.ProgramOption{tea.WithAltScreen()}
@@ -54,7 +54,7 @@ func createTeaHandler(db *sqlx.DB) func(sess ssh.Session) (tea.Model, []tea.Prog
 }
 
 func startProgram(db *sqlx.DB) {
-	_, err := tea.NewProgram(NewModel(db, "default")).Run()
+	_, err := tea.NewProgram(NewModel(db, "default", "")).Run()
 	if err != nil {
 		log.Error("Could not start program", "error", err)
 	}
@@ -107,19 +107,19 @@ func main() {
 
 	_ = db.MustExec(`
 		CREATE TABLE IF NOT EXISTS games (
-		game_id INTEGER PRIMARY KEY,
+		game_id TEXT PRIMARY KEY,
 		owner_id TEXT NOT NULL,
 		game INTEGER NOT NULL,
 		data TEXT NOT NULL,
 		save INTEGER DEFAULT 0,
 		last_save_time TIME NOT NULL
-	) STRICT`)
+	)`)
 
 	_ = db.MustExec(`
 		CREATE TABLE IF NOT EXISTS users (
 		user_id TEXT NOT NULL PRIMARY KEY,
 		username TEXT
-	) STRICT`)
+	)`)
 
 	if len(os.Args) >= 2 && os.Args[1] == "ssh" {
 		startSSH(db)

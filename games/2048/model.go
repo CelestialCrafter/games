@@ -69,7 +69,7 @@ func GetMetadata() common.Metadata {
 		BorderForeground(lipgloss.Color("#ffcc33")).
 		Align(lipgloss.Center).
 		Padding(3, 5).
-		Margin(1, 1).
+		Margin(1, 2).
 		Render("2048")
 
 	return common.Metadata{
