@@ -74,7 +74,7 @@ func GetMetadata() common.Metadata {
 
 	return common.Metadata{
 		Name:     "2048",
-		Features: []string{},
+		Features: []string{"saving"},
 		Icon:     logo,
 		ID:       1,
 	}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/CelestialCrafter/games/common"
 	twenty48 "github.com/CelestialCrafter/games/games/2048"
+	"github.com/CelestialCrafter/games/games/tictactoe"
 	"github.com/CelestialCrafter/games/save"
 	"github.com/CelestialCrafter/games/selector"
 	"github.com/CelestialCrafter/games/styles"
@@ -59,6 +60,8 @@ func NewGame(id uint) tea.Model {
 	switch id {
 	case twenty48.GetMetadata().ID:
 		return twenty48.NewModel()
+	case tictactoe.GetMetadata().ID:
+		return tictactoe.NewModel()
 	}
 
 	return EmptyModel{}

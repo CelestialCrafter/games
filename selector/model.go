@@ -3,6 +3,7 @@ package selector
 import (
 	common "github.com/CelestialCrafter/games/common"
 	twenty48 "github.com/CelestialCrafter/games/games/2048"
+	"github.com/CelestialCrafter/games/games/tictactoe"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -52,6 +53,7 @@ func NewModel(username string) Model {
 		help: help.New(),
 		gamesMetadata: []common.Metadata{
 			twenty48.GetMetadata(),
+			tictactoe.GetMetadata(),
 		},
 		// initial value till tea.WindowSizeMsg gets emitted
 		rowLength: 5,
