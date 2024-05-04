@@ -20,8 +20,7 @@ func (m Model) View() string {
 	}
 
 	greeting := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("7")).
-		BorderForeground(lipgloss.Color("2")).
+		BorderForeground(lipgloss.Color("6")).
 		Border(lipgloss.NormalBorder()).
 		BorderLeft(false).
 		BorderRight(false).
@@ -35,7 +34,7 @@ func (m Model) View() string {
 			Width(common.ICON_WIDTH+2).
 			Height(1).
 			Margin(1).
-			Foreground(lipgloss.Color("2")).
+			Foreground(lipgloss.Color("6")).
 			Render(strings.Repeat("━", common.ICON_WIDTH+2)),
 	)
 
