@@ -28,7 +28,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.keys.Eight,
 			m.keys.Nine,
 		):
-			m.process(msg)
+			if m.winner == 0 {
+				m.process(msg)
+			}
 		case key.Matches(msg, m.keys.Save):
 
 		}

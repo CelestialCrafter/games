@@ -48,11 +48,20 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 }
 
 type Model struct {
-	keys KeyMap
-	help help.Model
+	keys   KeyMap
+	help   help.Model
+	turn   uint8
+	board  [][]uint8
+	winner int
+	err    error
 }
 
 func NewModel() Model {
+	board := make([][]uint8, 3)
+	for i := range board {
+		board[i] = make([]uint8, 3)
+	}
+
 	return Model{
 		keys: KeyMap{
 			One:   key.NewBinding(key.WithKeys("1"), key.WithHelp("1", "one")),
@@ -68,7 +77,9 @@ func NewModel() Model {
 			Help:  key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
 			Quit:  key.NewBinding(key.WithKeys("q"), key.WithHelp("q", "back")),
 		},
-		help: help.New(),
+		help:  help.New(),
+		board: board,
+		turn:  1,
 	}
 }
 
