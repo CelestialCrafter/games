@@ -11,7 +11,7 @@ import (
 // @TODO score
 // @TODO game end logic
 
-func addSquare(board [][]uint16) ([][]uint16, error) {
+func getEmpty(board [][]uint16) []*uint16 {
 	empty := make([]*uint16, 0)
 
 	for x := 0; x < len(board); x++ {
@@ -23,13 +23,14 @@ func addSquare(board [][]uint16) ([][]uint16, error) {
 		}
 	}
 
-	if len(empty) <= 0 {
-		return board, fmt.Errorf("no empty spaces in board")
-	}
+	return empty
+}
 
+func addSquare(board [][]uint16) [][]uint16 {
+	empty := getEmpty(board)
 	*empty[rand.Intn(len(empty))] = uint16((rand.Intn(2) + 1) * 2)
 
-	return board, nil
+	return board
 }
 
 func reverse(matrix [][]uint16) [][]uint16 {
@@ -65,6 +66,37 @@ func createBoard(w int, h int) [][]uint16 {
 	}
 
 	return board
+}
+
+func findDownPair(board [][]uint16) bool {
+	for i := 0; i < len(board); i++ {
+		for j := 0; j < len(board[0])-1; j++ {
+			if board[i][j] == board[i][j+1] {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func checkLost(board [][]uint16) bool {
+	if len(getEmpty(board)) > 0 {
+		fmt.Println("empty")
+		return false
+	}
+
+	if findDownPair(board) {
+		fmt.Println("pair")
+		return false
+	}
+
+	if findDownPair(board) {
+		fmt.Println("rotated pair")
+		return false
+	}
+
+	return true
 }
 
 func push(board [][]uint16) ([][]uint16, bool) {
@@ -154,12 +186,9 @@ func (m Model) process(msg tea.Msg) {
 	}
 
 	if changed {
-		var err error
-		m.board, err = addSquare(m.board)
-		if err != nil {
-			// @TODO loop over each cell and check if its adjacent cells == current
-			// if atleast one is true then dont set finished to true
-			m.finished = true
-		}
+		m.board = addSquare(m.board)
+	}
+	if checkLost(m.board) {
+		m.finished = true
 	}
 }

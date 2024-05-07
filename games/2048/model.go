@@ -44,7 +44,7 @@ func NewModel() Model {
 		_ = i
 
 		// this should never error
-		board, _ = addSquare(board)
+		board = addSquare(board)
 	}
 
 	return Model{
