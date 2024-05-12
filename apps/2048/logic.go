@@ -1,7 +1,6 @@
 package twenty48
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -82,17 +81,14 @@ func findDownPair(board [][]uint16) bool {
 
 func checkLost(board [][]uint16) bool {
 	if len(getEmpty(board)) > 0 {
-		fmt.Println("empty")
 		return false
 	}
 
 	if findDownPair(board) {
-		fmt.Println("pair")
 		return false
 	}
 
 	if findDownPair(board) {
-		fmt.Println("rotated pair")
 		return false
 	}
 
@@ -140,7 +136,11 @@ func merge(board [][]uint16) ([][]uint16, bool) {
 	return board, changed
 }
 
-func (m Model) process(msg tea.Msg) {
+func (m *Model) process(msg tea.Msg) {
+	if m.finished {
+		return
+	}
+
 	changed := false
 
 	up := func() {
@@ -186,9 +186,7 @@ func (m Model) process(msg tea.Msg) {
 	}
 
 	if changed {
+		m.finished = checkLost(m.board)
 		m.board = addSquare(m.board)
-	}
-	if checkLost(m.board) {
-		m.finished = true
 	}
 }

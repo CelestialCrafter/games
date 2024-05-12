@@ -1,9 +1,9 @@
 package selector
 
 import (
+	twenty48 "github.com/CelestialCrafter/games/apps/2048"
+	"github.com/CelestialCrafter/games/apps/tictactoe"
 	common "github.com/CelestialCrafter/games/common"
-	twenty48 "github.com/CelestialCrafter/games/games/2048"
-	"github.com/CelestialCrafter/games/games/tictactoe"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"

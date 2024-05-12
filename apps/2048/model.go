@@ -26,10 +26,6 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 	}
 }
 
-type gameSave struct {
-	Board [][]uint16
-}
-
 type Model struct {
 	keys     KeyMap
 	help     help.Model

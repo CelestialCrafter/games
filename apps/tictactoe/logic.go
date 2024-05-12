@@ -1,8 +1,6 @@
 package tictactoe
 
 import (
-	"errors"
-
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -96,48 +94,51 @@ func (m Model) checkGameState() int {
 	return 0
 }
 
-func (m *Model) place(position uint) error {
+func (m Model) place(position uint) (ok bool) {
 	x, y := getBoardPosition(position)
 	cell := &m.board[x][y]
 
 	if *cell != 0 {
-		m.err = errors.New("spot is taken")
-		return m.err
+		return
 	}
 
 	*cell = m.turn
 
-	m.winner = m.checkGameState()
-
-	return nil
+	return true
 }
 
 func (m *Model) process(msg tea.Msg) {
-	var err error
+	var ok bool
+
+	if m.winner != 0 {
+		return
+	}
 
 	switch {
 	// top to bottom
 	case key.Matches(msg.(tea.KeyMsg), m.keys.One):
-		err = m.place(1)
+		ok = m.place(1)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Two):
-		err = m.place(2)
+		ok = m.place(2)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Three):
-		err = m.place(3)
+		ok = m.place(3)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Four):
-		err = m.place(4)
+		ok = m.place(4)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Five):
-		err = m.place(5)
+		ok = m.place(5)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Six):
-		err = m.place(6)
+		ok = m.place(6)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Seven):
-		err = m.place(7)
+		ok = m.place(7)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Eight):
-		err = m.place(8)
+		ok = m.place(8)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Nine):
-		err = m.place(9)
+		ok = m.place(9)
 	}
 
-	if err == nil {
+	if ok {
+		m.winner = m.checkGameState()
+
 		if m.turn == 2 {
 			m.turn = 1
 		} else {

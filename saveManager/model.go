@@ -1,4 +1,4 @@
-package save
+package saveManager
 
 import (
 	"crypto/sha1"
@@ -87,11 +87,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		_, err := m.db.Exec(`
 				INSERT INTO games(game_id,owner_id,game,data,save,last_save_time) VALUES($1,$2,$3,$4,$5,$6)
-					ON CONFLICT(game_id) DO UPDATE SET data=$2;`,
+					ON CONFLICT(game_id) DO UPDATE SET data=$4;`,
 			hex.EncodeToString(h.Sum(nil)),
 			m.userKey,
 			msg.ID,
-			// @TODO escape the save data
 			string(msg.Data),
 			saveFile,
 			time.Now(),

@@ -5,10 +5,14 @@ import (
 	"encoding/gob"
 
 	common "github.com/CelestialCrafter/games/common"
-	"github.com/CelestialCrafter/games/save"
+	"github.com/CelestialCrafter/games/saveManager"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
+
+type gameSave struct {
+	Board [][]uint16
+}
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -24,13 +28,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.process(msg)
 		case key.Matches(msg, m.keys.Save):
 			return m, func() tea.Msg {
-				gameSave := gameSave{
-					Board: m.board,
-				}
-
 				bytes := bytes.Buffer{}
 				encoder := gob.NewEncoder(&bytes)
-				err := encoder.Encode(gameSave)
+				err := encoder.Encode(gameSave{
+					Board: m.board,
+				})
 
 				if err != nil {
 					return common.ErrorMsg{
@@ -38,13 +40,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 
-				return save.SaveMsg{
+				return saveManager.SaveMsg{
 					Data: bytes.Bytes(),
 					ID:   GetMetadata().ID,
 				}
 			}
 		}
-	case save.LoadMsg:
+	case saveManager.LoadMsg:
 		saveData := gameSave{}
 
 		bytes := bytes.Buffer{}

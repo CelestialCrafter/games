@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"reflect"
 
+	twenty48 "github.com/CelestialCrafter/games/apps/2048"
+	"github.com/CelestialCrafter/games/apps/tictactoe"
 	"github.com/CelestialCrafter/games/common"
-	twenty48 "github.com/CelestialCrafter/games/games/2048"
-	"github.com/CelestialCrafter/games/games/tictactoe"
-	"github.com/CelestialCrafter/games/save"
+	"github.com/CelestialCrafter/games/saveManager"
 	"github.com/CelestialCrafter/games/selector"
 	"github.com/CelestialCrafter/games/styles"
 	"github.com/charmbracelet/bubbles/key"
@@ -45,7 +45,7 @@ type MainModel struct {
 func NewModel(db *sqlx.DB, userKey string, username string) MainModel {
 	return MainModel{
 		state:    selectorView,
-		save:     save.NewModel(db, userKey, username),
+		save:     saveManager.NewModel(db, userKey, username),
 		selector: selector.NewModel(username),
 		game:     nil,
 		keys: KeyMap{
@@ -101,7 +101,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.game = NewGame(msg.ID)
 
 		return m, tea.Batch(func() tea.Msg {
-			return save.TryLoad{
+			return saveManager.TryLoad{
 				ID: msg.ID,
 			}
 		}, m.game.Init())

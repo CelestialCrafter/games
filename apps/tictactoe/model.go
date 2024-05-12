@@ -53,7 +53,6 @@ type Model struct {
 	turn   uint8
 	board  [][]uint8
 	winner int
-	err    error
 }
 
 func NewModel() Model {

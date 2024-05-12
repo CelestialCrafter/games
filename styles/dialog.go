@@ -16,4 +16,8 @@ var (
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("2")).
 			Padding(1, 2)
+
+	StatusStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("8")).
+			Italic(true)
 )
