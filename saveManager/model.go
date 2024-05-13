@@ -7,6 +7,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/CelestialCrafter/games/apps/saves"
 	"github.com/CelestialCrafter/games/common"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
@@ -26,24 +27,16 @@ type LoadMsg struct {
 	Data []byte
 }
 
-type save struct {
-	Id           int       `db:"id"`
-	GameId       int       `db:"game_id"`
-	UserId       int       `db:"user_id"`
-	Data         string    `db:"data"`
-	LastSaveTime time.Time `db:"last_save_time"`
-}
-
 type Model struct {
 	db       *sqlx.DB
-	userKey  string
+	userId   string
 	username string
 }
 
-func NewModel(db *sqlx.DB, userKey string, username string) Model {
+func NewModel(db *sqlx.DB, userId string, username string) Model {
 	return Model{
 		db,
-		userKey,
+		userId,
 		username,
 	}
 }
@@ -60,7 +53,7 @@ func (m Model) Init() tea.Cmd {
 	}
 
 	_, err := m.db.Exec(fmt.Sprintf("INSERT%v INTO users(user_id,username) VALUES($1,$2)%v", ignore, upsert),
-		m.userKey,
+		m.userId,
 		m.username,
 	)
 
@@ -83,13 +76,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case SaveMsg:
 		saveFile := 0
 		h := sha1.New()
-		io.WriteString(h, fmt.Sprintf("%v-%v-%v", m.userKey, msg.ID, saveFile))
+		io.WriteString(h, fmt.Sprintf("%v-%v-%v", m.userId, msg.ID, saveFile))
 
 		_, err := m.db.Exec(`
 				INSERT INTO games(game_id,owner_id,game,data,save,last_save_time) VALUES($1,$2,$3,$4,$5,$6)
 					ON CONFLICT(game_id) DO UPDATE SET data=$4;`,
 			hex.EncodeToString(h.Sum(nil)),
-			m.userKey,
+			m.userId,
 			msg.ID,
 			string(msg.Data),
 			saveFile,
@@ -107,10 +100,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case TryLoad:
 		// @TODO multiple save files
-		save := []save{}
+		save := []saves.Save{}
 		saveFile := 0
 
-		err := m.db.Select(&save, "SELECT data from games WHERE owner_id=$1 AND game=$2 AND save=$3;", m.userKey, msg.ID, saveFile)
+		err := m.db.Select(&save, "SELECT data FROM games WHERE owner_id=$1 AND game=$2 AND save=$3;", m.userId, msg.ID, saveFile)
 		if err != nil {
 			log.Error("couldnt load save from database", "error", err)
 			return m, func() tea.Msg {

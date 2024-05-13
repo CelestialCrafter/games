@@ -38,7 +38,7 @@ func (m Model) View() string {
 			Render(strings.Repeat("━", common.ICON_WIDTH+2)),
 	)
 
-	rowAmount := int(math.Ceil(float64(len(m.gamesMetadata)) / float64(m.rowLength)))
+	rowAmount := int(math.Ceil(float64(len(common.Games)) / float64(m.rowLength)))
 	menu := make([][]string, rowAmount)
 	for i := range menu {
 		menu[i] = make([]string, m.rowLength)
@@ -46,12 +46,12 @@ func (m Model) View() string {
 
 	menuRows := make([]string, rowAmount)
 
-	for i := 0; i < len(m.gamesMetadata); i++ {
+	for i := 0; i < len(common.Games); i++ {
 		currentRow := int(math.Floor(float64(i) / float64(m.rowLength)))
 		currentColumn := i % m.rowLength
 		current := &menu[currentRow][currentColumn]
 
-		*current = m.gamesMetadata[i].Icon
+		*current = common.Games[uint(i)].Icon
 		if m.selectedGame == i {
 			*current = strings.TrimRightFunc(*current, unicode.IsSpace) + selectedBar
 		}

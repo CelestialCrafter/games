@@ -1,5 +1,11 @@
 package common
 
+import (
+	"fmt"
+
+	"github.com/charmbracelet/lipgloss"
+)
+
 const ICON_WIDTH, ICON_HEIGHT = 15, 7
 
 type Metadata struct {
@@ -9,4 +15,67 @@ type Metadata struct {
 	// loading, saving, and any other common features the game may support
 	Features []string
 	ID       uint
+}
+
+var (
+	Twenty48 = (func() Metadata {
+		logo := lipgloss.NewStyle().
+			Background(lipgloss.Color("#ffcc33")).
+			BorderForeground(lipgloss.Color("#ffcc33")).
+			Align(lipgloss.Center).
+			Padding(3, 6).
+			// this has weird positioning and it annoys me
+			PaddingRight(5).
+			Margin(1, 2).
+			Render("2048")
+
+		return Metadata{
+			Name:     "2048",
+			Features: []string{"saving"},
+			Icon:     logo,
+			ID:       0,
+		}
+	})()
+
+	TicTacToe = (func() Metadata {
+		r1 := "_|_|_\n"
+		r2 := "_|_|_\n"
+		r3 := " | | "
+		board := fmt.Sprint(r1, r2, r3)
+
+		logo := lipgloss.NewStyle().
+			Background(lipgloss.Color("1")).
+			Align(lipgloss.Center).
+			Padding(2, 5).
+			Margin(1, 2).
+			Render(board)
+
+		return Metadata{
+			Name:     "TicTacToe",
+			Features: []string{"saving"},
+			Icon:     logo,
+			ID:       1,
+		}
+	})()
+
+	Saves = (func() Metadata {
+		logo := lipgloss.NewStyle().
+			Background(lipgloss.Color("8")).
+			BorderForeground(lipgloss.Color("8")).
+			Align(lipgloss.Center).
+			Padding(2, 5).
+			Margin(1, 2).
+			Render("Saves")
+
+		return Metadata{
+			Name: "Saves",
+			Icon: logo,
+			ID:   2,
+		}
+	})()
+)
+
+var Games = map[uint]Metadata{
+	Twenty48.ID:  Twenty48,
+	TicTacToe.ID: TicTacToe,
 }

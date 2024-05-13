@@ -53,7 +53,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				return saveManager.SaveMsg{
 					Data: bytes.Bytes(),
-					ID:   GetMetadata().ID,
+					ID:   common.TicTacToe.ID,
 				}
 			}
 		}

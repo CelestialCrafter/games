@@ -31,23 +31,23 @@ type KeyMap struct {
 }
 
 type MainModel struct {
-	state    sessionState
-	save     tea.Model
-	selector tea.Model
-	game     tea.Model
-	keys     KeyMap
-	err      *common.ErrorMsg
-	selected int
-	width    int
-	height   int
+	state       sessionState
+	saveManager tea.Model
+	selector    tea.Model
+	app         tea.Model
+	keys        KeyMap
+	err         *common.ErrorMsg
+	selected    int
+	width       int
+	height      int
 }
 
 func NewModel(db *sqlx.DB, userKey string, username string) MainModel {
 	return MainModel{
-		state:    selectorView,
-		save:     saveManager.NewModel(db, userKey, username),
-		selector: selector.NewModel(username),
-		game:     nil,
+		state:       selectorView,
+		saveManager: saveManager.NewModel(db, userKey, username),
+		selector:    selector.NewModel(username),
+		app:         nil,
 		keys: KeyMap{
 			ArrowsKeyMap: common.NewArrowsKeyMap(),
 			Select:       key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select")),
@@ -58,9 +58,9 @@ func NewModel(db *sqlx.DB, userKey string, username string) MainModel {
 
 func NewGame(id uint) tea.Model {
 	switch id {
-	case twenty48.GetMetadata().ID:
+	case common.Twenty48.ID:
 		return twenty48.NewModel()
-	case tictactoe.GetMetadata().ID:
+	case common.TicTacToe.ID:
 		return tictactoe.NewModel()
 	}
 
@@ -68,7 +68,7 @@ func NewGame(id uint) tea.Model {
 }
 
 func (m MainModel) Init() tea.Cmd {
-	return tea.Batch(m.save.Init(), m.selector.Init())
+	return tea.Batch(m.saveManager.Init(), m.selector.Init())
 }
 
 func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -95,16 +95,16 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case common.BackMsg:
 		m.state = selectorView
-		m.game = nil
+		m.app = nil
 	case selector.PlayMsg:
 		m.state = gameView
-		m.game = NewGame(msg.ID)
+		m.app = NewGame(msg.ID)
 
 		return m, tea.Batch(func() tea.Msg {
 			return saveManager.TryLoad{
 				ID: msg.ID,
 			}
-		}, m.game.Init())
+		}, m.app.Init())
 	case common.ErrorMsg:
 		if msg.Err != nil {
 			log.Error("game sent error message", "error", msg.Err)
@@ -115,7 +115,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 	}
 
-	m.save, cmd = m.save.Update(msg)
+	m.saveManager, cmd = m.saveManager.Update(msg)
 	if cmd != nil {
 		return m, cmd
 	}
@@ -124,7 +124,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case selectorView:
 		m.selector, cmd = m.selector.Update(msg)
 	case gameView:
-		m.game, cmd = m.game.Update(msg)
+		m.app, cmd = m.app.Update(msg)
 	}
 
 	return m, cmd
@@ -144,7 +144,7 @@ func (m MainModel) View() string {
 	case selectorView:
 		s = m.selector.View()
 	case gameView:
-		s = m.game.View()
+		s = m.app.View()
 	}
 
 	// error handling

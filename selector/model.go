@@ -1,8 +1,6 @@
 package selector
 
 import (
-	twenty48 "github.com/CelestialCrafter/games/apps/2048"
-	"github.com/CelestialCrafter/games/apps/tictactoe"
 	common "github.com/CelestialCrafter/games/common"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -32,14 +30,13 @@ type PlayMsg struct {
 }
 
 type Model struct {
-	keys          KeyMap
-	help          help.Model
-	gamesMetadata []common.Metadata
-	selectedGame  int
-	rowLength     int
-	username      string
-	width         int
-	height        int
+	keys         KeyMap
+	help         help.Model
+	selectedGame int
+	rowLength    int
+	username     string
+	width        int
+	height       int
 }
 
 func NewModel(username string) Model {
@@ -51,10 +48,6 @@ func NewModel(username string) Model {
 			Help:         key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
 		},
 		help: help.New(),
-		gamesMetadata: []common.Metadata{
-			twenty48.GetMetadata(),
-			tictactoe.GetMetadata(),
-		},
 		// initial value till tea.WindowSizeMsg gets emitted
 		rowLength: 5,
 		username:  username,

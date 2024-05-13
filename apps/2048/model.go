@@ -5,7 +5,6 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type KeyMap struct {
@@ -57,23 +56,4 @@ func NewModel() Model {
 
 func (m Model) Init() tea.Cmd {
 	return nil
-}
-
-func GetMetadata() common.Metadata {
-	logo := lipgloss.NewStyle().
-		Background(lipgloss.Color("#ffcc33")).
-		BorderForeground(lipgloss.Color("#ffcc33")).
-		Align(lipgloss.Center).
-		Padding(3, 6).
-		// this has weird positioning and it annoys me
-		PaddingRight(5).
-		Margin(1, 2).
-		Render("2048")
-
-	return common.Metadata{
-		Name:     "2048",
-		Features: []string{"saving"},
-		Icon:     logo,
-		ID:       1,
-	}
 }
