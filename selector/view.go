@@ -11,14 +11,6 @@ import (
 )
 
 func (m Model) View() string {
-	s := ""
-
-	if m.username == "" {
-		s = fmt.Sprintf("welcome back %v!! <3", m.username)
-	} else {
-		s = "welcome back!! <3"
-	}
-
 	greeting := lipgloss.NewStyle().
 		BorderForeground(lipgloss.Color("6")).
 		Border(lipgloss.NormalBorder()).
@@ -27,7 +19,7 @@ func (m Model) View() string {
 		BorderTop(false).
 		Margin(1).
 		Padding(0, 2).
-		Render(s)
+		Render("welcome back!! <3")
 
 	selectedBar := fmt.Sprintf(
 		"\n%v", lipgloss.NewStyle().

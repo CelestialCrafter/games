@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	twenty48 "github.com/CelestialCrafter/games/apps/2048"
+	"github.com/CelestialCrafter/games/apps/saves"
 	"github.com/CelestialCrafter/games/apps/tictactoe"
 	"github.com/CelestialCrafter/games/common"
 	"github.com/CelestialCrafter/games/saveManager"
@@ -14,7 +15,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
-	"github.com/jmoiron/sqlx"
 )
 
 type sessionState int
@@ -37,17 +37,19 @@ type MainModel struct {
 	app         tea.Model
 	keys        KeyMap
 	err         *common.ErrorMsg
+	userId      string
 	selected    int
 	width       int
 	height      int
 }
 
-func NewModel(db *sqlx.DB, userKey string, username string) MainModel {
+func NewModel(userId string) MainModel {
 	return MainModel{
 		state:       selectorView,
-		saveManager: saveManager.NewModel(db, userKey, username),
-		selector:    selector.NewModel(username),
+		saveManager: saveManager.NewModel(userId),
+		selector:    selector.NewModel(),
 		app:         nil,
+		userId:      userId,
 		keys: KeyMap{
 			ArrowsKeyMap: common.NewArrowsKeyMap(),
 			Select:       key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select")),
@@ -56,12 +58,14 @@ func NewModel(db *sqlx.DB, userKey string, username string) MainModel {
 	}
 }
 
-func NewGame(id uint) tea.Model {
+func (m MainModel) NewGame(id uint) tea.Model {
 	switch id {
 	case common.Twenty48.ID:
 		return twenty48.NewModel()
 	case common.TicTacToe.ID:
 		return tictactoe.NewModel()
+	case common.Saves.ID:
+		return saves.NewModel(m.userId)
 	}
 
 	return EmptyModel{}
@@ -98,7 +102,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.app = nil
 	case selector.PlayMsg:
 		m.state = gameView
-		m.app = NewGame(msg.ID)
+		m.app = m.NewGame(msg.ID)
 
 		return m, tea.Batch(func() tea.Msg {
 			return saveManager.TryLoad{

@@ -63,7 +63,7 @@ var (
 			Background(lipgloss.Color("8")).
 			BorderForeground(lipgloss.Color("8")).
 			Align(lipgloss.Center).
-			Padding(2, 5).
+			Padding(3, 5).
 			Margin(1, 2).
 			Render("Saves")
 
@@ -78,4 +78,5 @@ var (
 var Games = map[uint]Metadata{
 	Twenty48.ID:  Twenty48,
 	TicTacToe.ID: TicTacToe,
+	Saves.ID:     Saves,
 }

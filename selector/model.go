@@ -34,12 +34,11 @@ type Model struct {
 	help         help.Model
 	selectedGame int
 	rowLength    int
-	username     string
 	width        int
 	height       int
 }
 
-func NewModel(username string) Model {
+func NewModel() Model {
 	return Model{
 		keys: KeyMap{
 			ArrowsKeyMap: common.NewArrowsKeyMap(),
@@ -50,7 +49,6 @@ func NewModel(username string) Model {
 		help: help.New(),
 		// initial value till tea.WindowSizeMsg gets emitted
 		rowLength: 5,
-		username:  username,
 	}
 }
 

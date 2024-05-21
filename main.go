@@ -22,6 +22,8 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
+
+	"github.com/CelestialCrafter/games/db"
 )
 
 const (
@@ -31,7 +33,7 @@ const (
 	file = "database.db"
 )
 
-func createTeaHandler(db *sqlx.DB) func(sess ssh.Session) (tea.Model, []tea.ProgramOption) {
+func createTeaHandler() func(sess ssh.Session) (tea.Model, []tea.ProgramOption) {
 	return func(sess ssh.Session) (tea.Model, []tea.ProgramOption) {
 		key := sess.PublicKey()
 		if key == nil {
@@ -46,21 +48,21 @@ func createTeaHandler(db *sqlx.DB) func(sess ssh.Session) (tea.Model, []tea.Prog
 		keyType := key.Type()
 		keyData := hex.EncodeToString(key.Marshal())
 
-		m := NewModel(db, fmt.Sprintf("%v-%v", keyType, keyData), sess.User())
+		m := NewModel(fmt.Sprintf("%v-%v", keyType, keyData))
 		renderer := bubbletea.MakeRenderer(sess)
 		lipgloss.SetDefaultRenderer(renderer)
 		return m, []tea.ProgramOption{tea.WithAltScreen()}
 	}
 }
 
-func startProgram(db *sqlx.DB) {
-	_, err := tea.NewProgram(NewModel(db, "default", "")).Run()
+func startProgram() {
+	_, err := tea.NewProgram(NewModel("default")).Run()
 	if err != nil {
 		log.Error("Could not start program", "error", err)
 	}
 }
 
-func startSSH(db *sqlx.DB) {
+func startSSH() {
 	addr := net.JoinHostPort(host, port)
 
 	s, err := wish.NewServer(
@@ -70,7 +72,7 @@ func startSSH(db *sqlx.DB) {
 			return true
 		}),
 		wish.WithMiddleware(
-			bubbletea.Middleware(createTeaHandler(db)),
+			bubbletea.Middleware(createTeaHandler()),
 			activeterm.Middleware(),
 			logging.Middleware(),
 		),
@@ -100,30 +102,25 @@ func startSSH(db *sqlx.DB) {
 }
 
 func main() {
-	db, err := sqlx.Open("sqlite3", file)
+	newDb, err := sqlx.Connect("sqlite3", file)
 	if err != nil {
 		log.Error("Could not open database", "error", err)
 	}
 
-	_ = db.MustExec(`
+	_ = newDb.MustExec(`
 		CREATE TABLE IF NOT EXISTS games (
 		game_id TEXT PRIMARY KEY,
 		owner_id TEXT NOT NULL,
 		game INTEGER NOT NULL,
 		data TEXT NOT NULL,
-		save INTEGER DEFAULT 0,
-		last_save_time TIME NOT NULL
+		save INTEGER DEFAULT 0
 	)`)
 
-	_ = db.MustExec(`
-		CREATE TABLE IF NOT EXISTS users (
-		user_id TEXT NOT NULL PRIMARY KEY,
-		username TEXT
-	)`)
+	db.DB = newDb
 
 	if len(os.Args) >= 2 && os.Args[1] == "ssh" {
-		startSSH(db)
+		startSSH()
 	} else {
-		startProgram(db)
+		startProgram()
 	}
 }
