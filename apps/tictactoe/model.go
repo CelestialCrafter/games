@@ -1,6 +1,7 @@
 package tictactoe
 
 import (
+	"github.com/CelestialCrafter/games/common"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -69,8 +70,8 @@ func NewModel() Model {
 			Eight: key.NewBinding(key.WithKeys("8"), key.WithHelp("8", "eight")),
 			Nine:  key.NewBinding(key.WithKeys("9"), key.WithHelp("9", "nine")),
 			Save:  key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "save")),
-			Help:  key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
-			Quit:  key.NewBinding(key.WithKeys("q"), key.WithHelp("q", "back")),
+			Help:  common.NewHelpBinding(),
+			Quit:  common.NewBackBinding(),
 		},
 		help:  help.New(),
 		board: board,

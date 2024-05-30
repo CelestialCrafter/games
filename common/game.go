@@ -19,3 +19,11 @@ func NewArrowsKeyMap() ArrowsKeyMap {
 		Right: key.NewBinding(key.WithKeys("l", "right", "d"), key.WithHelp("↑/l/d", "move right")),
 	}
 }
+
+func NewBackBinding() key.Binding {
+	return key.NewBinding(key.WithKeys("esc", "q"), key.WithHelp("esc/q", "back"))
+}
+
+func NewHelpBinding() key.Binding {
+	return key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help"))
+}

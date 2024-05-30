@@ -46,8 +46,8 @@ func NewModel() Model {
 		keys: KeyMap{
 			ArrowsKeyMap: common.NewArrowsKeyMap(),
 			Save:         key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "save")),
-			Help:         key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
-			Quit:         key.NewBinding(key.WithKeys("q"), key.WithHelp("q", "back")),
+			Help:         common.NewHelpBinding(),
+			Quit:         common.NewBackBinding(),
 		},
 		help:  help.New(),
 		board: board,

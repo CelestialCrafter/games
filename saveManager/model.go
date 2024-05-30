@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/CelestialCrafter/games/apps/saves"
 	"github.com/CelestialCrafter/games/common"
@@ -44,19 +43,18 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SaveMsg:
-		saveFile := 0
+		file := 0
 		h := sha1.New()
-		io.WriteString(h, fmt.Sprintf("%v-%v-%v", m.userId, msg.ID, saveFile))
+		io.WriteString(h, fmt.Sprintf("%v-%v-%v", m.userId, msg.ID, file))
 
 		_, err := db.DB.Exec(`
-				INSERT INTO games(game_id,owner_id,game,data,save,last_save_time) VALUES($1,$2,$3,$4,$5,$6)
-					ON CONFLICT(game_id) DO UPDATE SET data=$4;`,
+				INSERT INTO saves(save_id,owner_id,game_id,data,file) VALUES($1,$2,$3,$4,$5)
+					ON CONFLICT(save_id) DO UPDATE SET data=$4;`,
 			hex.EncodeToString(h.Sum(nil)),
 			m.userId,
 			msg.ID,
 			string(msg.Data),
-			saveFile,
-			time.Now(),
+			file,
 		)
 
 		if err != nil {
@@ -73,7 +71,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		save := []saves.Save{}
 		saveFile := 0
 
-		err := db.DB.Select(&save, "SELECT data FROM games WHERE owner_id=$1 AND game=$2 AND save=$3;", m.userId, msg.ID, saveFile)
+		err := db.DB.Select(&save, "SELECT data FROM saves WHERE owner_id=$1 AND game_id=$2 AND file=$3;", m.userId, msg.ID, saveFile)
 		if err != nil {
 			log.Error("couldnt load save from database", "error", err)
 			return m, func() tea.Msg {

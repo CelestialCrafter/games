@@ -108,12 +108,12 @@ func main() {
 	}
 
 	_ = newDb.MustExec(`
-		CREATE TABLE IF NOT EXISTS games (
-		game_id TEXT PRIMARY KEY,
+		CREATE TABLE IF NOT EXISTS saves (
+		save_id TEXT PRIMARY KEY,
 		owner_id TEXT NOT NULL,
-		game INTEGER NOT NULL,
+		game_id INTEGER NOT NULL,
 		data TEXT NOT NULL,
-		save INTEGER DEFAULT 0
+		file INTEGER DEFAULT 0
 	)`)
 
 	db.DB = newDb

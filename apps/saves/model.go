@@ -5,24 +5,25 @@ import (
 
 	common "github.com/CelestialCrafter/games/common"
 	"github.com/CelestialCrafter/games/db"
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 )
 
 var listStyle = lipgloss.NewStyle().Margin(1, 2)
+var deleteBinding = key.NewBinding(key.WithKeys("delete", "d"), key.WithHelp("delete/d", "delete save"))
 
 type SetupMsg struct {
 	saves []Save
 }
 
 type Save struct {
-	Id      string `db:"game_id"`
+	Id      string `db:"save_id"`
 	OwnerId string `db:"owner_id"`
-	GameId  uint   `db:"game"`
-	Save    uint   `db:"save"`
+	GameId  uint   `db:"game_id"`
+	File    uint   `db:"file"`
 	Data    string `db:"data"`
 }
 
@@ -31,46 +32,30 @@ func (s Save) Title() string {
 }
 
 func (s Save) Description() string {
-	return fmt.Sprintf("File %v", s.Save)
+	return fmt.Sprintf("File %v", s.File)
 }
 
 func (s Save) FilterValue() string { return s.Title() }
 
-type KeyMap struct {
-	common.ArrowsKeyMap
-	Delete key.Binding
-	Help   key.Binding
-	Quit   key.Binding
-}
-
-func (k KeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Delete, k.Help, k.Quit}
-}
-
-func (k KeyMap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{
-		{k.Up, k.Down, k.Left, k.Right},
-		{k.Delete, k.Help, k.Quit},
-	}
-}
-
 type Model struct {
-	keys   KeyMap
-	help   help.Model
 	list   list.Model
 	userId string
 }
 
 func NewModel(userId string) Model {
+	listModel := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	listModel.DisableQuitKeybindings()
+	modifiedKeyMap := list.DefaultKeyMap()
+	modifiedKeyMap.Quit = common.NewBackBinding()
+	listModel.KeyMap = modifiedKeyMap
+	listModel.AdditionalShortHelpKeys = func() []key.Binding {
+		return []key.Binding{
+			deleteBinding,
+		}
+	}
+
 	return Model{
-		keys: KeyMap{
-			ArrowsKeyMap: common.NewArrowsKeyMap(),
-			Delete:       key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "delete save")),
-			Help:         key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
-			Quit:         key.NewBinding(key.WithKeys("q"), key.WithHelp("q", "back")),
-		},
-		help:   help.New(),
-		list:   list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
+		list:   listModel,
 		userId: userId,
 	}
 }
@@ -78,9 +63,10 @@ func NewModel(userId string) Model {
 func (m Model) setup() tea.Msg {
 	saves := []Save{}
 
-	err := db.DB.Select(&saves, "SELECT game_id, game FROM games WHERE owner_id=$1", m.userId)
+	err := db.DB.Select(&saves, "SELECT save_id, game_id FROM saves WHERE owner_id=$1", m.userId)
 	// life if messages were commands 🤤
 	if err != nil {
+		log.Error("couldn't load saves from database", "error", err)
 		return func() tea.Msg {
 			return common.ErrorMsg{
 				Err: err,
@@ -102,6 +88,8 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+
 	switch msg := msg.(type) {
 	case SetupMsg:
 		m.list.Title = "Saves"
@@ -112,19 +100,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.list.SetItems(items)
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, deleteBinding):
+			item := m.list.Items()[m.list.Index()]
+			save := item.(Save)
 
+			_, err := db.DB.Exec("DELETE FROM saves WHERE save_id=$1wawa;", save.Id)
+			if err != nil {
+				log.Error("couldn't delete save from database", "error", err)
+				cmd = func() tea.Msg {
+					return common.ErrorMsg{
+						Err: err,
+					}
+				}
+			}
+		case key.Matches(msg, m.list.KeyMap.Quit):
+			return m, func() tea.Msg {
+				return common.BackMsg{}
+			}
+		}
 	case tea.WindowSizeMsg:
 		h, v := listStyle.GetFrameSize()
 		m.list.SetSize(msg.Width-h, msg.Height-v)
-
-		m.help.Width = msg.Width
 	}
 
-	var cmd tea.Cmd
-	m.list, cmd = m.list.Update(msg)
-	return m, cmd
+	var listCmd tea.Cmd
+	m.list, listCmd = m.list.Update(msg)
+	log.Warn("cmd", "cmd", cmd)
+	return m, tea.Batch(cmd, listCmd)
 }
 
 func (m Model) View() string {
-	return listStyle.Render(m.list.View())
+	return m.list.View()
 }

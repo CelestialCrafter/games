@@ -42,9 +42,9 @@ func NewModel() Model {
 	return Model{
 		keys: KeyMap{
 			ArrowsKeyMap: common.NewArrowsKeyMap(),
-			Quit:         key.NewBinding(key.WithKeys("q"), key.WithHelp("q", "quit")),
+			Quit:         common.NewBackBinding(),
 			Play:         key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "play game")),
-			Help:         key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
+			Help:         common.NewHelpBinding(),
 		},
 		help: help.New(),
 		// initial value till tea.WindowSizeMsg gets emitted
