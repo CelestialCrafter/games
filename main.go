@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -19,6 +20,7 @@ import (
 	"github.com/charmbracelet/wish/activeterm"
 	"github.com/charmbracelet/wish/bubbletea"
 	"github.com/charmbracelet/wish/logging"
+	"github.com/muesli/termenv"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -33,6 +35,11 @@ const (
 	file = "database.db"
 )
 
+var (
+	enableSsh = flag.Bool("ssh", false, "turns into a ssh server")
+	// https://github.com/muesli/termenv/blob/51d72d34e2b9778a31aa5dd79fbdd8cdac50b4d5/profile.go#L12
+	forceColorProfile = flag.Int("force-profile", -1, "force a color profile (seems to only work in ssh mode)")
+)
 var programOpts = []tea.ProgramOption{tea.WithAltScreen()}
 
 func createTeaHandler() func(sess ssh.Session) (tea.Model, []tea.ProgramOption) {
@@ -62,6 +69,10 @@ func createTeaHandler() func(sess ssh.Session) (tea.Model, []tea.ProgramOption) 
 }
 
 func startProgram() {
+	if *forceColorProfile != -1 {
+		lipgloss.DefaultRenderer().SetColorProfile(termenv.Profile(*forceColorProfile))
+	}
+
 	_, err := tea.NewProgram(NewModel("default"), programOpts...).Run()
 	if err != nil {
 		log.Error("Could not start program", "error", err)
@@ -71,6 +82,18 @@ func startProgram() {
 func startSSH() {
 	addr := net.JoinHostPort(host, port)
 
+	teaHandler := createTeaHandler()
+	var teaMiddleware wish.Middleware
+
+	if *forceColorProfile != -1 {
+		teaMiddleware = bubbletea.MiddlewareWithColorProfile(
+			createTeaHandler(),
+			termenv.Profile(*forceColorProfile),
+		)
+	} else {
+		teaMiddleware = bubbletea.Middleware(teaHandler)
+	}
+
 	s, err := wish.NewServer(
 		wish.WithAddress(addr),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
@@ -78,7 +101,7 @@ func startSSH() {
 			return true
 		}),
 		wish.WithMiddleware(
-			bubbletea.Middleware(createTeaHandler()),
+			teaMiddleware,
 			activeterm.Middleware(),
 			logging.Middleware(),
 		),
@@ -108,6 +131,8 @@ func startSSH() {
 }
 
 func main() {
+	flag.Parse()
+
 	newDb, err := sqlx.Connect("sqlite3", file)
 	if err != nil {
 		log.Error("Could not open database", "error", err)
@@ -124,16 +149,17 @@ func main() {
 
 	db.DB = newDb
 
-	if len(os.Args) >= 2 && os.Args[1] == "ssh" {
+	if *enableSsh {
 		startSSH()
-	} else {
-		// logging messes with the TUI, so we have to write logs to a file when not running as a ssh server
-		f, err := tea.LogToFileWith("program.log", "debug", log.Default())
-		if err != nil {
-			log.Fatal("could not open log file", "error", err)
-		}
-		defer f.Close()
-
-		startProgram()
+		return
 	}
+
+	// logging messes with the TUI, so we have to write logs to a file when not running as a ssh server
+	f, err := tea.LogToFileWith("program.log", "debug", log.Default())
+	if err != nil {
+		log.Fatal("could not open log file", "error", err)
+	}
+	defer f.Close()
+
+	startProgram()
 }
