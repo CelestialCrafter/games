@@ -1,8 +1,6 @@
 package common
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -38,17 +36,12 @@ var (
 	})()
 
 	TicTacToe = (func() Metadata {
-		r1 := "_|_|_\n"
-		r2 := "_|_|_\n"
-		r3 := " | | "
-		board := fmt.Sprint(r1, r2, r3)
-
 		logo := lipgloss.NewStyle().
 			Background(lipgloss.Color("1")).
 			Align(lipgloss.Center).
-			Padding(2, 5).
+			Padding(3, 6).
 			Margin(1, 2).
-			Render(board)
+			Render("X/O")
 
 		return Metadata{
 			Name:     "TicTacToe",

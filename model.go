@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 
 	twenty48 "github.com/CelestialCrafter/games/apps/2048"
 	"github.com/CelestialCrafter/games/apps/saves"
@@ -104,11 +103,20 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state = gameView
 		m.app = m.NewGame(msg.ID)
 
-		return m, tea.Batch(func() tea.Msg {
-			return saveManager.TryLoad{
-				ID: msg.ID,
-			}
-		}, m.app.Init())
+		return m, tea.Batch(
+			m.app.Init(),
+			func() tea.Msg {
+				return saveManager.TryLoad{
+					ID: msg.ID,
+				}
+			},
+			func() tea.Msg {
+				return tea.WindowSizeMsg{
+					Width:  m.width,
+					Height: m.height,
+				}
+			},
+		)
 	case common.ErrorMsg:
 		if msg.Err != nil {
 			log.Error("game sent error message", "error", msg.Err)
@@ -159,7 +167,7 @@ func (m MainModel) View() string {
 		if m.err.ActionText == "" {
 			actionText = "Continue"
 		} else {
-			actionText = fmt.Sprint(reflect.TypeOf(m.err.Action))
+			actionText = m.err.ActionText
 		}
 
 		actionButton := m.getButtonStyle(0).Render(actionText)

@@ -33,15 +33,21 @@ const (
 	file = "database.db"
 )
 
+var programOpts = []tea.ProgramOption{tea.WithAltScreen()}
+
 func createTeaHandler() func(sess ssh.Session) (tea.Model, []tea.ProgramOption) {
 	return func(sess ssh.Session) (tea.Model, []tea.ProgramOption) {
 		key := sess.PublicKey()
 		if key == nil {
 			log.Error("Key was nil (enable PublicKeyAuth middleware?)")
-			sess.Write([]byte("You need to ssh in with a public key!"))
-			err := sess.Close()
+			_, err := sess.Write([]byte("You need to ssh in with a public key!"))
 			if err != nil {
-				log.Error("Couldnt close session due to nil key", "error", err)
+				log.Error("Could not write error message to session", "error", err)
+			}
+
+			err = sess.Close()
+			if err != nil {
+				log.Error("Could not close session due to nil key", "error", err)
 			}
 		}
 
@@ -51,12 +57,12 @@ func createTeaHandler() func(sess ssh.Session) (tea.Model, []tea.ProgramOption) 
 		m := NewModel(fmt.Sprintf("%v-%v", keyType, keyData))
 		renderer := bubbletea.MakeRenderer(sess)
 		lipgloss.SetDefaultRenderer(renderer)
-		return m, []tea.ProgramOption{tea.WithAltScreen()}
+		return m, programOpts
 	}
 }
 
 func startProgram() {
-	_, err := tea.NewProgram(NewModel("default")).Run()
+	_, err := tea.NewProgram(NewModel("default"), programOpts...).Run()
 	if err != nil {
 		log.Error("Could not start program", "error", err)
 	}
@@ -121,6 +127,13 @@ func main() {
 	if len(os.Args) >= 2 && os.Args[1] == "ssh" {
 		startSSH()
 	} else {
+		// logging messes with the TUI, so we have to write logs to a file when not running as a ssh server
+		f, err := tea.LogToFileWith("program.log", "debug", log.Default())
+		if err != nil {
+			log.Fatal("could not open log file", "error", err)
+		}
+		defer f.Close()
+
 		startProgram()
 	}
 }

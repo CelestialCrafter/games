@@ -1,6 +1,7 @@
 package saves
 
 import (
+	"errors"
 	"fmt"
 
 	common "github.com/CelestialCrafter/games/common"
@@ -13,11 +14,9 @@ import (
 )
 
 var listStyle = lipgloss.NewStyle().Margin(1, 2)
-var deleteBinding = key.NewBinding(key.WithKeys("delete", "d"), key.WithHelp("delete/d", "delete save"))
+var deleteBinding = key.NewBinding(key.WithKeys("delete", "x"), key.WithHelp("delete/x", "delete save"))
 
-type SetupMsg struct {
-	saves []Save
-}
+type SavesMsg []Save
 
 type Save struct {
 	Id      string `db:"save_id"`
@@ -44,7 +43,6 @@ type Model struct {
 
 func NewModel(userId string) Model {
 	listModel := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
-	listModel.DisableQuitKeybindings()
 	modifiedKeyMap := list.DefaultKeyMap()
 	modifiedKeyMap.Quit = common.NewBackBinding()
 	listModel.KeyMap = modifiedKeyMap
@@ -53,6 +51,8 @@ func NewModel(userId string) Model {
 			deleteBinding,
 		}
 	}
+	listModel.Title = "Saves"
+	listModel.SetItems([]list.Item{})
 
 	return Model{
 		list:   listModel,
@@ -67,20 +67,10 @@ func (m Model) setup() tea.Msg {
 	// life if messages were commands 🤤
 	if err != nil {
 		log.Error("couldn't load saves from database", "error", err)
-		return func() tea.Msg {
-			return common.ErrorMsg{
-				Err: err,
-				Action: func() tea.Msg {
-					return common.BackMsg{}
-				},
-				ActionText: "Back",
-			}
-		}
+		return common.ErrorWithBack(err)
 	}
 
-	return SetupMsg{
-		saves,
-	}
+	return SavesMsg(saves)
 }
 
 func (m Model) Init() tea.Cmd {
@@ -88,37 +78,45 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
+	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case SetupMsg:
-		m.list.Title = "Saves"
+	case SavesMsg:
+		if len(msg) < 1 {
+			return m, common.ErrorWithBack(errors.New("no save files exist"))
+		}
 
-		items := make([]list.Item, len(msg.saves))
-		for i, v := range msg.saves {
+		items := make([]list.Item, len(msg))
+		for i, v := range msg {
 			items[i] = v
 		}
 
 		m.list.SetItems(items)
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, deleteBinding):
-			item := m.list.Items()[m.list.Index()]
-			save := item.(Save)
-
-			_, err := db.DB.Exec("DELETE FROM saves WHERE save_id=$1wawa;", save.Id)
-			if err != nil {
-				log.Error("couldn't delete save from database", "error", err)
-				cmd = func() tea.Msg {
-					return common.ErrorMsg{
-						Err: err,
-					}
-				}
-			}
 		case key.Matches(msg, m.list.KeyMap.Quit):
 			return m, func() tea.Msg {
 				return common.BackMsg{}
 			}
+		}
+		switch {
+		case key.Matches(msg, deleteBinding):
+			item := m.list.SelectedItem()
+			save := item.(Save)
+
+			cmds = append(cmds, func() tea.Msg {
+				_, err := db.DB.Exec("DELETE FROM saves WHERE save_id=$1wawa;", save.Id)
+				if err != nil {
+					log.Error("couldn't delete save from database", "error", err)
+
+					return common.ErrorMsg{
+						Err: err,
+					}
+				}
+
+				m.list.RemoveItem(m.list.Index())
+				return nil
+			})
 		}
 	case tea.WindowSizeMsg:
 		h, v := listStyle.GetFrameSize()
@@ -127,8 +125,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var listCmd tea.Cmd
 	m.list, listCmd = m.list.Update(msg)
-	log.Warn("cmd", "cmd", cmd)
-	return m, tea.Batch(cmd, listCmd)
+	cmds = append(cmds, listCmd)
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
