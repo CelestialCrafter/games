@@ -17,7 +17,7 @@ func (m Model) View() string {
 	xStyle := lipgloss.NewStyle().
 		Inherit(styles.StatusStyle).
 		Foreground(lipgloss.Color("4"))
-	yStyle := lipgloss.NewStyle().
+	oStyle := lipgloss.NewStyle().
 		Inherit(styles.StatusStyle).
 		Foreground(lipgloss.Color("2"))
 
@@ -27,7 +27,7 @@ func (m Model) View() string {
 	if m.turn == 1 {
 		turn = xStyle.Render("x")
 	} else {
-		turn = yStyle.Render("y")
+		turn = oStyle.Render("o")
 	}
 
 	status = fmt.Sprintf("%v%v", turn, styles.StatusStyle.Render("'s turn"))
@@ -37,7 +37,7 @@ func (m Model) View() string {
 		if m.winner == 1 {
 			winner = xStyle.Render("x")
 		} else {
-			winner = yStyle.Render("y")
+			winner = oStyle.Render("o")
 		}
 
 		status = fmt.Sprintf("%v %v", winner, styles.StatusStyle.Render("wins!"))

@@ -16,15 +16,15 @@ func getBoardPosition(position uint) (uint, uint) {
 func (m Model) checkGameState() int {
 	// win condition 1
 	for i := 0; i < len(m.board); i++ {
-		initial := int(m.board[i][0])
 		failed := false
+
+		initial := int(m.board[i][0])
+		if initial == 0 {
+			failed = true
+		}
 
 		for j := 0; j < len(m.board[0]); j++ {
 			current := int(m.board[i][j])
-			if current == 0 {
-				failed = true
-				break
-			}
 
 			if initial != current {
 				failed = true
@@ -38,41 +38,51 @@ func (m Model) checkGameState() int {
 	}
 
 	// win condition 2
-	// AAAAAAAAAAA JAVASCRIPT :mikudead::mikudead::mikudead:
-	rv, ok := (func() (int, bool) {
-		initial := int(m.board[0][0])
+	// top left -> bottom right
+	{
 		failed := false
+
+		initial := int(m.board[0][0])
+		if initial == 0 {
+			failed = true
+		}
 
 		for i := 0; i < len(m.board); i++ {
 			current := int(m.board[i][i])
-			if current == 0 || initial != current {
-				failed = true
-				break
-			}
-		}
-
-		initial = int(m.board[0][len(m.board)-1])
-		failed = false
-
-		for i := len(m.board) - 1; i >= 0; i-- {
-			current := int(m.board[len(m.board)-1-i][i])
-			if current == 0 || initial != current {
+			if initial != current {
 				failed = true
 				break
 			}
 		}
 
 		if !failed {
-			return initial, true
+			return initial
 		}
-
-		return 0, false
-	})()
-
-	if ok {
-		return rv
 	}
 
+	// top right -> bottom left
+	{
+
+		failed := false
+
+		initial := int(m.board[0][len(m.board)-1])
+		if initial == 0 {
+			failed = true
+		}
+
+		for i := len(m.board) - 1; i >= 0; i-- {
+			current := int(m.board[len(m.board)-1-i][i])
+			if initial != current {
+				failed = true
+				break
+			}
+		}
+
+		if !failed {
+			return initial
+		}
+
+	}
 	// win condition 3
 	for i := 0; i < len(m.board[0]); i++ {
 		initial := int(m.board[0][i])
