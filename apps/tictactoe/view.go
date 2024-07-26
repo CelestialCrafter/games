@@ -8,41 +8,60 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (m Model) View() string {
-	cellStyle := lipgloss.NewStyle().
-		Padding(1, 0).
-		Width(7).
-		Align(lipgloss.Center)
+var cellStyle = lipgloss.NewStyle().
+	Padding(1, 0).
+	Width(7).
+	Align(lipgloss.Center)
 
-	xStyle := lipgloss.NewStyle().
-		Inherit(styles.StatusStyle).
-		Foreground(lipgloss.Color("4"))
-	oStyle := lipgloss.NewStyle().
-		Inherit(styles.StatusStyle).
-		Foreground(lipgloss.Color("2"))
+var xStyle = lipgloss.NewStyle().
+	Inherit(styles.StatusStyle).
+	Foreground(lipgloss.Color("4"))
 
-	status := ""
+var oStyle = lipgloss.NewStyle().
+	Inherit(styles.StatusStyle).
+	Foreground(lipgloss.Color("2"))
 
-	var turn string
-	if m.turn == 1 {
-		turn = xStyle.Render("x")
+func winStatus(winner int) string {
+
+	// draw
+	if winner == 3 {
+		return styles.StatusStyle.Render("it's a draw!")
+
+	}
+
+	var winnerText string
+	if winner == 1 {
+		winnerText = xStyle.Render("x")
 	} else {
-		turn = oStyle.Render("o")
+		winnerText = oStyle.Render("o")
 	}
 
-	status = fmt.Sprintf("%v%v", turn, styles.StatusStyle.Render("'s turn"))
+	return fmt.Sprintf("%v %v", winnerText, styles.StatusStyle.Render("wins!"))
+}
 
-	if m.winner != 0 {
-		var winner string
-		if m.winner == 1 {
-			winner = xStyle.Render("x")
-		} else {
-			winner = oStyle.Render("o")
-		}
+func turnTextStatus(turn int) string {
 
-		status = fmt.Sprintf("%v %v", winner, styles.StatusStyle.Render("wins!"))
+	var turnText string
+	if turn == 1 {
+		turnText = xStyle.Render("x")
+	} else {
+		turnText = oStyle.Render("o")
 	}
 
+	return fmt.Sprintf("%v%v", turnText, styles.StatusStyle.Render("'s turn"))
+
+}
+
+func (m Model) View() string {
+
+	var status string
+	if m.winner == 0 {
+		status = turnTextStatus(int(m.turn))
+	} else {
+		status = winStatus(m.winner)
+	}
+
+	// render cell colors
 	board := common.RenderBoard(m.board, func(cell uint8) string {
 		var color lipgloss.Color
 

@@ -101,6 +101,21 @@ func (m Model) checkGameState() int {
 		}
 	}
 
+	// draw
+	failed := false
+	for i := 0; i < len(m.board[0]); i++ {
+		for j := 0; j < len(m.board[0]); j++ {
+			if int(m.board[i][j]) == 0 {
+				failed = true
+				break
+			}
+		}
+	}
+
+	if !failed {
+		return 3
+	}
+
 	return 0
 }
 
