@@ -4,7 +4,10 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-const ICON_WIDTH, ICON_HEIGHT = 15, 7
+const (
+	ICON_WIDTH  = 15
+	ICON_HEIGHT = 7
+)
 
 type Metadata struct {
 	Name string

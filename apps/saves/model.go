@@ -9,11 +9,9 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 )
 
-var listStyle = lipgloss.NewStyle().Margin(1, 2)
 var deleteBinding = key.NewBinding(key.WithKeys("delete", "x"), key.WithHelp("delete/x", "delete save"))
 
 type SavesMsg []Save
@@ -119,8 +117,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			})
 		}
 	case tea.WindowSizeMsg:
-		h, v := listStyle.GetFrameSize()
-		m.list.SetSize(msg.Width-h, msg.Height-v)
+		m.list.SetSize(msg.Width, msg.Height)
 	}
 
 	var listCmd tea.Cmd

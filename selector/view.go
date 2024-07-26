@@ -23,11 +23,9 @@ func (m Model) View() string {
 
 	selectedBar := fmt.Sprintf(
 		"\n%v", lipgloss.NewStyle().
-			Width(common.ICON_WIDTH+2).
-			Height(1).
-			Margin(1).
+			Margin(0, 1).
 			Foreground(lipgloss.Color("6")).
-			Render(strings.Repeat("━", common.ICON_WIDTH+2)),
+			Render(strings.Repeat("─", common.ICON_WIDTH+1)),
 	)
 
 	rowAmount := int(math.Ceil(float64(len(common.Games)) / float64(m.rowLength)))
@@ -39,7 +37,7 @@ func (m Model) View() string {
 	menuRows := make([]string, rowAmount)
 
 	for i := 0; i < len(common.Games); i++ {
-		currentRow := int(math.Floor(float64(i) / float64(m.rowLength)))
+		currentRow := i / m.rowLength
 		currentColumn := i % m.rowLength
 		current := &menu[currentRow][currentColumn]
 

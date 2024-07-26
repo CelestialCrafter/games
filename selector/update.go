@@ -1,6 +1,8 @@
 package selector
 
 import (
+	"math"
+
 	common "github.com/CelestialCrafter/games/common"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -32,8 +34,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.selectedGame = min(max(m.selectedGame, 0), len(common.Games)-1)
 	case tea.WindowSizeMsg:
-		// -1 is to account for margin
-		m.rowLength = msg.Width/common.ICON_WIDTH - 1
+		m.rowLength = int(math.Max(1.0, float64(msg.Width/common.ICON_WIDTH-1)))
 		m.help.Width = msg.Width
 		m.width = msg.Width
 		m.height = msg.Height
