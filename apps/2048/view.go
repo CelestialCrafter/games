@@ -27,5 +27,19 @@ func (m Model) View() string {
 		return cellStyle.Background(color).Render(cellString)
 	})
 
-	return fmt.Sprintf("%v\n\n%v\n%v", board, status, m.help.View(m.keys))
+	board = lipgloss.NewStyle().BorderForeground(lipgloss.Color("2")).Border(lipgloss.RoundedBorder()).Render(board)
+
+	board = lipgloss.JoinVertical(lipgloss.Top, board, status)
+	board = lipgloss.Place(m.width, lipgloss.Height(board), lipgloss.Center, lipgloss.Top, board)
+
+	help := m.help.View(m.keys)
+
+	availableHeight := m.height
+	availableHeight -= lipgloss.Height(help)
+
+	return lipgloss.JoinVertical(
+		lipgloss.Top,
+		lipgloss.NewStyle().Height(availableHeight).Render(board),
+		help,
+	)
 }

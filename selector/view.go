@@ -17,15 +17,15 @@ func (m Model) View() string {
 		BorderLeft(false).
 		BorderRight(false).
 		BorderTop(false).
-		Margin(1).
 		Padding(0, 2).
 		Render("welcome back!! <3")
+	greeting = lipgloss.Place(m.width, 2, lipgloss.Center, lipgloss.Top, greeting)
 
 	selectedBar := fmt.Sprintf(
 		"\n%v", lipgloss.NewStyle().
 			Margin(0, 1).
 			Foreground(lipgloss.Color("6")).
-			Render(strings.Repeat("─", common.ICON_WIDTH+1)),
+			Render(strings.Repeat("─", common.ICON_WIDTH+2)),
 	)
 
 	rowAmount := int(math.Ceil(float64(len(common.Games)) / float64(m.rowLength)))
@@ -51,12 +51,17 @@ func (m Model) View() string {
 		menuRows[i] = lipgloss.JoinHorizontal(lipgloss.Top, menu[i]...)
 	}
 
-	menuString := lipgloss.JoinVertical(lipgloss.Left, menuRows...)
+	menuJoined := lipgloss.JoinVertical(lipgloss.Left, menuRows...)
+	help := m.help.View(m.keys)
 
-	return fmt.Sprintf(
-		"%v%v\n%v",
-		lipgloss.Place(m.width, 2, lipgloss.Center, lipgloss.Top, greeting),
-		menuString,
-		m.help.View(m.keys),
+	availableHeight := m.height
+	availableHeight -= lipgloss.Height(greeting)
+	availableHeight -= lipgloss.Height(help)
+
+	return lipgloss.JoinVertical(
+		lipgloss.Top,
+		greeting,
+		lipgloss.NewStyle().Height(availableHeight).Render(menuJoined),
+		help,
 	)
 }

@@ -30,6 +30,8 @@ type Model struct {
 	help     help.Model
 	board    [][]uint16
 	finished bool
+	height   int
+	width    int
 }
 
 func NewModel() Model {

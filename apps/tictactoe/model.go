@@ -50,6 +50,8 @@ type Model struct {
 	turn   uint8
 	board  [][]uint8
 	winner int
+	height int
+	width  int
 }
 
 func NewModel() Model {

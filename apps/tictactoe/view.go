@@ -63,14 +63,12 @@ func (m Model) View() string {
 
 	// render cell colors
 	board := common.RenderBoard(m.board, func(cell uint8) string {
-		var color lipgloss.Color
+		newCellStyle := cellStyle.Copy()
 
-		if cell == 0 {
-			color = lipgloss.Color("0")
-		} else if cell == 1 {
-			color = lipgloss.Color("4")
-		} else {
-			color = lipgloss.Color("2")
+		if cell == 1 {
+			newCellStyle = newCellStyle.Background(lipgloss.Color("2"))
+		} else if cell == 2 {
+			newCellStyle = newCellStyle.Background(lipgloss.Color("6"))
 		}
 
 		var cellString string
@@ -82,8 +80,22 @@ func (m Model) View() string {
 			cellString = "o"
 		}
 
-		return cellStyle.Background(color).Render(cellString)
+		return newCellStyle.Render(cellString)
 	})
 
-	return fmt.Sprintf("%v\n\n%v\n%v", board, status, m.help.View(m.keys))
+	board = lipgloss.NewStyle().BorderForeground(lipgloss.Color("2")).Border(lipgloss.RoundedBorder()).Render(board)
+
+	board = lipgloss.JoinVertical(lipgloss.Top, board, status)
+	board = lipgloss.Place(m.width, lipgloss.Height(board), lipgloss.Center, lipgloss.Top, board)
+
+	help := m.help.View(m.keys)
+
+	availableHeight := m.height
+	availableHeight -= lipgloss.Height(help)
+
+	return lipgloss.JoinVertical(
+		lipgloss.Top,
+		lipgloss.NewStyle().Height(availableHeight).Render(board),
+		help,
+	)
 }
