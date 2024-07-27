@@ -9,19 +9,20 @@ import (
 
 type KeyMap struct {
 	common.ArrowsKeyMap
-	Save key.Binding
-	Help key.Binding
-	Quit key.Binding
+	Save  key.Binding
+	Help  key.Binding
+	Quit  key.Binding
+	Reset key.Binding
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Save, k.Help, k.Quit}
+	return []key.Binding{k.Save, k.Help, k.Quit, k.Reset}
 }
 
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Up, k.Down, k.Left, k.Right},
-		{k.Save, k.Help, k.Quit},
+		{k.Save, k.Help, k.Quit, k.Reset},
 	}
 }
 
@@ -47,9 +48,10 @@ func NewModel() Model {
 	return Model{
 		keys: KeyMap{
 			ArrowsKeyMap: common.NewArrowsKeyMap(),
-			Save:         key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "save")),
+			Save:         common.NewSaveBinding(),
 			Help:         common.NewHelpBinding(),
 			Quit:         common.NewBackBinding(),
+			Reset:        common.NewResetBinding(),
 		},
 		help:  help.New(),
 		board: board,

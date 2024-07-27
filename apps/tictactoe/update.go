@@ -37,6 +37,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.keys.Nine,
 		):
 			m.process(msg)
+		case key.Matches(msg, m.keys.Reset):
+			newModel := NewModel()
+			newModel.width = m.width
+			newModel.height = m.height
+			m = newModel
 		case key.Matches(msg, m.keys.Save):
 			return m, func() tea.Msg {
 				bytes := bytes.Buffer{}

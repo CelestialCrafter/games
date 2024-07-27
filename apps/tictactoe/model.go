@@ -1,6 +1,8 @@
 package tictactoe
 
 import (
+	"math/rand"
+
 	"github.com/CelestialCrafter/games/common"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -18,13 +20,14 @@ type KeyMap struct {
 	Eight key.Binding
 	Nine  key.Binding
 
-	Save key.Binding
-	Help key.Binding
-	Quit key.Binding
+	Save  key.Binding
+	Help  key.Binding
+	Quit  key.Binding
+	Reset key.Binding
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Save, k.Help, k.Quit}
+	return []key.Binding{k.Save, k.Help, k.Quit, k.Reset}
 }
 
 func (k KeyMap) FullHelp() [][]key.Binding {
@@ -35,12 +38,14 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 			k.Three,
 			k.Four,
 			k.Five,
+		},
+		{
 			k.Six,
 			k.Seven,
 			k.Eight,
 			k.Nine,
 		},
-		{k.Save, k.Help, k.Quit},
+		{k.Save, k.Help, k.Quit, k.Reset},
 	}
 }
 
@@ -74,10 +79,11 @@ func NewModel() Model {
 			Save:  key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "save")),
 			Help:  common.NewHelpBinding(),
 			Quit:  common.NewBackBinding(),
+			Reset: common.NewResetBinding(),
 		},
 		help:  help.New(),
 		board: board,
-		turn:  1,
+		turn:  uint8(rand.Intn(2)) + 1,
 	}
 }
 
