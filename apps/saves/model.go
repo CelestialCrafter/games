@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 )
 
@@ -40,6 +41,7 @@ type Model struct {
 }
 
 func NewModel(userId string) Model {
+	// @TODO list styles
 	listModel := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	modifiedKeyMap := list.DefaultKeyMap()
 	modifiedKeyMap.Quit = common.NewBackBinding()
@@ -49,7 +51,8 @@ func NewModel(userId string) Model {
 			deleteBinding,
 		}
 	}
-	listModel.Title = "Saves"
+	listModel.Title = ""
+	listModel.Styles.Title = lipgloss.NewStyle()
 	listModel.SetItems([]list.Item{})
 
 	return Model{

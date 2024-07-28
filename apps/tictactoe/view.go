@@ -8,6 +8,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+var xColor = styles.CellColors[11]
+var oColor = styles.CellColors[5]
+
 var cellStyle = lipgloss.NewStyle().
 	Padding(1, 0).
 	Width(7).
@@ -15,11 +18,11 @@ var cellStyle = lipgloss.NewStyle().
 
 var xStyle = lipgloss.NewStyle().
 	Inherit(styles.StatusStyle).
-	Foreground(lipgloss.Color("4"))
+	Foreground(xColor)
 
 var oStyle = lipgloss.NewStyle().
 	Inherit(styles.StatusStyle).
-	Foreground(lipgloss.Color("2"))
+	Foreground(oColor)
 
 func winStatus(winner int) string {
 
@@ -66,9 +69,9 @@ func (m Model) View() string {
 		newCellStyle := cellStyle.Copy()
 
 		if cell == 1 {
-			newCellStyle = newCellStyle.Background(lipgloss.Color("2"))
+			newCellStyle = newCellStyle.Background(xColor)
 		} else if cell == 2 {
-			newCellStyle = newCellStyle.Background(lipgloss.Color("6"))
+			newCellStyle = newCellStyle.Background(oColor)
 		}
 
 		var cellString string
@@ -83,7 +86,7 @@ func (m Model) View() string {
 		return newCellStyle.Render(cellString)
 	})
 
-	board = lipgloss.NewStyle().BorderForeground(lipgloss.Color("2")).Border(lipgloss.RoundedBorder()).Render(board)
+	board = lipgloss.NewStyle().BorderForeground(styles.Colors.Accent).Border(lipgloss.RoundedBorder()).Render(board)
 
 	board = lipgloss.JoinVertical(lipgloss.Top, board, status)
 	board = lipgloss.Place(m.width, lipgloss.Height(board), lipgloss.Center, lipgloss.Top, board)

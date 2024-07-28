@@ -21,8 +21,7 @@ type Metadata struct {
 var (
 	Twenty48 = (func() Metadata {
 		logo := lipgloss.NewStyle().
-			Background(lipgloss.Color("#ffcc33")).
-			BorderForeground(lipgloss.Color("#ffcc33")).
+			Background(lipgloss.Color("214")).
 			Align(lipgloss.Center).
 			Padding(3, 6).
 			// this has weird positioning and it annoys me
@@ -40,7 +39,7 @@ var (
 
 	TicTacToe = (func() Metadata {
 		logo := lipgloss.NewStyle().
-			Background(lipgloss.Color("1")).
+			Background(lipgloss.Color("168")).
 			Align(lipgloss.Center).
 			Padding(3, 6).
 			Margin(1, 2).
@@ -56,8 +55,7 @@ var (
 
 	Saves = (func() Metadata {
 		logo := lipgloss.NewStyle().
-			Background(lipgloss.Color("8")).
-			BorderForeground(lipgloss.Color("8")).
+			Background(lipgloss.Color("244")).
 			Align(lipgloss.Center).
 			Padding(3, 5).
 			Margin(1, 2).

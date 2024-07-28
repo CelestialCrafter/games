@@ -7,12 +7,13 @@ import (
 	"unicode"
 
 	common "github.com/CelestialCrafter/games/common"
+	"github.com/CelestialCrafter/games/styles"
 	"github.com/charmbracelet/lipgloss"
 )
 
 func (m Model) View() string {
 	greeting := lipgloss.NewStyle().
-		BorderForeground(lipgloss.Color("6")).
+		BorderForeground(styles.Colors.Accent).
 		Border(lipgloss.NormalBorder()).
 		BorderLeft(false).
 		BorderRight(false).
@@ -24,7 +25,7 @@ func (m Model) View() string {
 	selectedBar := fmt.Sprintf(
 		"\n%v", lipgloss.NewStyle().
 			Margin(0, 1).
-			Foreground(lipgloss.Color("6")).
+			Foreground(styles.Colors.Secondary).
 			Render(strings.Repeat("─", common.ICON_WIDTH+2)),
 	)
 

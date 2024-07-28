@@ -79,6 +79,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.board = saveData.Board
+		m.winner = m.checkGameState()
 	case tea.WindowSizeMsg:
 		m.help.Width = msg.Width
 		m.width = msg.Width

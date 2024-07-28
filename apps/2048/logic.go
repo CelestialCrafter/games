@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/log"
 )
 
 // @TODO score
@@ -179,6 +178,4 @@ func (m *Model) process(msg tea.Msg) {
 		addSquare(m.board)
 		m.finished = checkLost(m.board)
 	}
-
-	log.Info("ima tach u", ":drool:", m.board)
 }

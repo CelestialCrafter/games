@@ -22,12 +22,18 @@ func (m Model) View() string {
 	}
 
 	board := common.RenderBoard(m.board, func(cell uint16) string {
-		color := lipgloss.Color(fmt.Sprint(math.Log2(float64(cell))))
+		index := int(math.Max(math.Log2(float64(cell)), 0))
+		color := styles.CellColors[index]
 		cellString := fmt.Sprint(cell)
-		return cellStyle.Background(color).Render(cellString)
+
+		if cell == 0 {
+			return cellStyle.Render(fmt.Sprint(cellString))
+		}
+		newCellStyle := cellStyle.Copy().Background(color)
+		return newCellStyle.Render(cellString)
 	})
 
-	board = lipgloss.NewStyle().BorderForeground(lipgloss.Color("2")).Border(lipgloss.RoundedBorder()).Render(board)
+	board = lipgloss.NewStyle().BorderForeground(styles.Colors.Accent).Border(lipgloss.RoundedBorder()).Render(board)
 
 	board = lipgloss.JoinVertical(lipgloss.Top, board, status)
 	board = lipgloss.Place(m.width, lipgloss.Height(board), lipgloss.Center, lipgloss.Top, board)

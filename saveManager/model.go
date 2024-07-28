@@ -40,14 +40,28 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
+func saveError(err error) func() tea.Msg {
+	return func() tea.Msg {
+
+		return common.ErrorMsg{
+			Err:    fmt.Errorf("couldnt save: %v", err),
+			Action: nil,
+		}
+	}
+}
+
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SaveMsg:
 		file := 0
 		h := sha1.New()
-		io.WriteString(h, fmt.Sprintf("%v-%v-%v", m.userId, msg.ID, file))
+		_, err := io.WriteString(h, fmt.Sprintf("%v-%v-%v", m.userId, msg.ID, file))
+		if err != nil {
+			log.Error("couldn't write save id to hash")
+			return m, saveError(err)
+		}
 
-		_, err := db.DB.Exec(`
+		_, err = db.DB.Exec(`
 				INSERT INTO saves(save_id,owner_id,game_id,data,file) VALUES($1,$2,$3,$4,$5)
 					ON CONFLICT(save_id) DO UPDATE SET data=$4;`,
 			hex.EncodeToString(h.Sum(nil)),
@@ -59,12 +73,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if err != nil {
 			log.Error("couldnt save to database", "error", err)
-			return m, func() tea.Msg {
-				return common.ErrorMsg{
-					Err:    fmt.Errorf("couldnt save: %v", err),
-					Action: nil,
-				}
-			}
+			return m, saveError(err)
 		}
 	case TryLoad:
 		// @TODO multiple save files

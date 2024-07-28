@@ -2,22 +2,20 @@ package styles
 
 import "github.com/charmbracelet/lipgloss"
 
-// @TODO have standard color definition & use 256 color ansi
-
 var (
 	Button = lipgloss.NewStyle().
-		Background(lipgloss.Color("8")).
+		Background(Colors.Muted).
 		Padding(0, 2).
 		Margin(1)
 
-	ButtonSelected = Button.Copy().Background(lipgloss.Color("4"))
+	ButtonSelected = Button.Copy().Background(Colors.Primary)
 
 	DialogBox = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("2")).
+			BorderForeground(Colors.Accent).
 			Padding(1, 2)
 
 	StatusStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("8")).
+			Foreground(lipgloss.Color(Colors.Muted)).
 			Italic(true)
 )
