@@ -2,9 +2,11 @@ package twenty48
 
 import (
 	"math/rand"
+	"reflect"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/log"
 )
 
 // @TODO score
@@ -35,30 +37,28 @@ func addSquare(board [][]uint16) [][]uint16 {
 	return board
 }
 
-func reverse(matrix [][]uint16) [][]uint16 {
+func reverse(matrix [][]uint16) {
 	for i, j := 0, len(matrix)-1; i < j; i, j = i+1, j-1 {
 		matrix[i], matrix[j] = matrix[j], matrix[i]
 	}
-
-	return matrix
 }
 
-func transpose(matrix [][]uint16) [][]uint16 {
+func transpose(matrix [][]uint16) {
 	for i := 0; i < len(matrix); i++ {
 		for j := 0; j < i; j++ {
 			matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
 		}
 	}
-
-	return matrix
 }
 
-func rotate90(matrix [][]uint16) [][]uint16 {
-	return transpose(reverse(matrix))
+func rotate90(matrix [][]uint16) {
+	transpose(matrix)
+	reverse(matrix)
 }
 
-func rotateN90(matrix [][]uint16) [][]uint16 {
-	return reverse(transpose(matrix))
+func rotateN90(matrix [][]uint16) {
+	reverse(matrix)
+	transpose(matrix)
 }
 
 func createBoard(w int, h int) [][]uint16 {
@@ -82,7 +82,10 @@ func findDownPair(board [][]uint16) bool {
 	return false
 }
 
-func checkLost(board [][]uint16) bool {
+func checkLost(originalBoard [][]uint16) bool {
+	board := createBoard(len(originalBoard), len(originalBoard[0]))
+	copy(board, originalBoard)
+
 	if len(getEmpty(board)) > 0 {
 		return false
 	}
@@ -91,35 +94,28 @@ func checkLost(board [][]uint16) bool {
 		return false
 	}
 
-	return !findDownPair(rotate90(board))
+	rotate90(board)
+	return !findDownPair(board)
 }
 
-func push(board [][]uint16) ([][]uint16, bool) {
-	newBoard := createBoard(len(board), len(board[0]))
-	changed := false
-
+func push(board [][]uint16) {
 	for i := 0; i < len(board); i++ {
 		position := 0
 		for j := 0; j < len(board[0]); j++ {
 			current := &board[i][j]
-			next := &newBoard[i][position]
+			next := &board[i][position]
 
 			if *current != 0 {
+				tmp := *next
 				*next = *current
-				if j != position {
-					changed = true
-				}
+				*current = tmp
 				position++
 			}
 		}
 	}
-
-	return newBoard, changed
 }
 
-func merge(board [][]uint16) ([][]uint16, bool) {
-	changed := false
-
+func merge(board [][]uint16) {
 	for i := 0; i < len(board); i++ {
 		for j := 0; j < len(board)-1; j++ {
 			current := &board[i][j]
@@ -127,12 +123,37 @@ func merge(board [][]uint16) ([][]uint16, bool) {
 			if *current == *next && *current != 0 {
 				*current = *current * 2
 				*next = 0
-				changed = true
 			}
 		}
 	}
+}
 
-	return board, changed
+func up(board boardType) {
+	push(board)
+	merge(board)
+	push(board)
+}
+
+func right(board boardType) {
+	rotateN90(board)
+	up(board)
+	rotate90(board)
+}
+
+func left(board boardType) {
+	rotate90(board)
+	up(board)
+	rotateN90(board)
+}
+
+func down(board boardType) {
+	for range 2 {
+		rotate90(board)
+	}
+	up(board)
+	for range 2 {
+		rotateN90(board)
+	}
 }
 
 func (m *Model) process(msg tea.Msg) {
@@ -140,54 +161,24 @@ func (m *Model) process(msg tea.Msg) {
 		return
 	}
 
-	changed := false
-
-	up := func() {
-		var board [][]uint16
-		board, changed1 := push(m.board)
-		board, changed2 := merge(board)
-		board, _ = push(board)
-
-		if changed1 || changed2 {
-			changed = true
-		}
-
-		copy(m.board, board)
-	}
-
-	right := func() {
-		rotate90(m.board)
-		up()
-		rotateN90(m.board)
-	}
-
-	left := func() {
-		rotateN90(m.board)
-		up()
-		rotate90(m.board)
-	}
-
-	down := func() {
-		rotate90(rotate90(m.board))
-		up()
-		rotateN90(rotateN90(m.board))
-	}
+	before := createBoard(boardWidth, boardHeight)
+	copy(before, m.board)
 
 	switch {
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Up):
-		up()
+		up(m.board)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Down):
-		down()
+		down(m.board)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Left):
-		left()
+		left(m.board)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Right):
-		right()
+		right(m.board)
 	}
 
-	if changed {
+	if !reflect.DeepEqual(before, m.board) {
 		addSquare(m.board)
-		boardCopy := createBoard(BOARD_WIDTH, BOARD_HEIGHT)
-		copy(boardCopy, m.board)
-		m.finished = checkLost(boardCopy)
+		m.finished = checkLost(m.board)
 	}
+
+	log.Info("ima tach u", ":drool:", m.board)
 }

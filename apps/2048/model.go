@@ -12,6 +12,8 @@ const (
 	boardHeight = 4
 )
 
+type boardType [][]uint16
+
 type KeyMap struct {
 	common.ArrowsKeyMap
 	Save  key.Binding
@@ -34,7 +36,7 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 type Model struct {
 	keys     KeyMap
 	help     help.Model
-	board    [][]uint16
+	board    boardType
 	finished bool
 	height   int
 	width    int
