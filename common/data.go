@@ -9,14 +9,12 @@ type ErrorMsg struct {
 	Fatal      bool
 }
 
-func ErrorWithBack(err error) tea.Cmd {
-	return func() tea.Msg {
-		return ErrorMsg{
-			Err: err,
-			Action: func() tea.Msg {
-				return BackMsg{}
-			},
-			ActionText: "Back",
-		}
+func ErrorWithBack(err error) tea.Msg {
+	return ErrorMsg{
+		Err: err,
+		Action: func() tea.Msg {
+			return BackMsg{}
+		},
+		ActionText: "Back",
 	}
 }

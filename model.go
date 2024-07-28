@@ -103,7 +103,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state = gameView
 		m.app = m.NewGame(msg.ID)
 
-		return m, tea.Batch(
+		return m, tea.Sequence(
 			m.app.Init(),
 			func() tea.Msg {
 				return saveManager.TryLoad{

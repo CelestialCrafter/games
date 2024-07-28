@@ -68,7 +68,7 @@ func (m Model) setup() tea.Msg {
 	// life if messages were commands 🤤
 	if err != nil {
 		log.Error("couldn't load saves from database", "error", err)
-		return common.ErrorWithBack(err)
+		return common.ErrorWithBack(fmt.Errorf("could not delete save: %v", err))
 	}
 
 	return SavesMsg(saves)
@@ -84,7 +84,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SavesMsg:
 		if len(msg) < 1 {
-			return m, common.ErrorWithBack(errors.New("no save files exist"))
+			return m, func() tea.Msg {
+				return common.ErrorWithBack(errors.New("no save files exist"))
+			}
 		}
 
 		items := make([]list.Item, len(msg))
@@ -102,22 +104,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		switch {
 		case key.Matches(msg, deleteBinding):
-			item := m.list.SelectedItem()
-			save := item.(Save)
+			save := m.list.SelectedItem().(Save)
+			index := m.list.Index()
 
-			cmds = append(cmds, func() tea.Msg {
-				_, err := db.DB.Exec("DELETE FROM saves WHERE save_id=$1wawa;", save.Id)
-				if err != nil {
-					log.Error("couldn't delete save from database", "error", err)
+			cmds = append(
+				cmds,
+				func() tea.Msg {
+					// @FIX if this errors the item does not get inserted back into the list
+					_, err := db.DB.Exec("DELETE FROM saves WHERE save_id=$1;", save.Id)
+					m.list.RemoveItem(index)
 
-					return common.ErrorMsg{
-						Err: err,
+					if err != nil {
+						log.Error("couldn't delete save from database", "error", err)
+
+						return common.ErrorWithBack(fmt.Errorf("couldn't delete save: %v", err))
 					}
-				}
 
-				m.list.RemoveItem(m.list.Index())
-				return nil
-			})
+					if len(m.list.Items()) < 1 {
+						return common.ErrorWithBack(errors.New("no save files exist"))
+					}
+
+					return nil
+				})
 		}
 	case tea.WindowSizeMsg:
 		m.list.SetSize(msg.Width, msg.Height)
