@@ -68,6 +68,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.board = saveData.Board
+		m.finished = checkLost(saveData.Board)
 	case tea.WindowSizeMsg:
 		m.help.Width = msg.Width
 		m.width = msg.Width

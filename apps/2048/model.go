@@ -7,6 +7,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+const (
+	boardWidth  = 4
+	boardHeight = 4
+)
+
 type KeyMap struct {
 	common.ArrowsKeyMap
 	Save  key.Binding
@@ -36,7 +41,7 @@ type Model struct {
 }
 
 func NewModel() Model {
-	board := createBoard(4, 4)
+	board := createBoard(boardWidth, boardHeight)
 
 	for i := range 2 {
 		_ = i

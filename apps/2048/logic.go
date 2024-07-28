@@ -8,7 +8,6 @@ import (
 )
 
 // @TODO score
-// @TODO game end logic
 
 func getEmpty(board [][]uint16) []*uint16 {
 	empty := make([]*uint16, 0)
@@ -27,6 +26,10 @@ func getEmpty(board [][]uint16) []*uint16 {
 
 func addSquare(board [][]uint16) [][]uint16 {
 	empty := getEmpty(board)
+	if len(empty) < 1 {
+		return board
+	}
+
 	*empty[rand.Intn(len(empty))] = uint16((rand.Intn(2) + 1) * 2)
 
 	return board
@@ -88,11 +91,7 @@ func checkLost(board [][]uint16) bool {
 		return false
 	}
 
-	if findDownPair(board) {
-		return false
-	}
-
-	return true
+	return !findDownPair(rotate90(board))
 }
 
 func push(board [][]uint16) ([][]uint16, bool) {
@@ -157,21 +156,21 @@ func (m *Model) process(msg tea.Msg) {
 	}
 
 	right := func() {
-		m.board = rotate90(m.board)
+		rotate90(m.board)
 		up()
-		m.board = rotateN90(m.board)
+		rotateN90(m.board)
 	}
 
 	left := func() {
-		m.board = rotateN90(m.board)
+		rotateN90(m.board)
 		up()
-		m.board = rotate90(m.board)
+		rotate90(m.board)
 	}
 
 	down := func() {
-		m.board = rotate90(rotate90(m.board))
+		rotate90(rotate90(m.board))
 		up()
-		m.board = rotateN90(rotateN90(m.board))
+		rotateN90(rotateN90(m.board))
 	}
 
 	switch {
@@ -186,7 +185,9 @@ func (m *Model) process(msg tea.Msg) {
 	}
 
 	if changed {
-		m.finished = checkLost(m.board)
-		m.board = addSquare(m.board)
+		addSquare(m.board)
+		boardCopy := createBoard(BOARD_WIDTH, BOARD_HEIGHT)
+		copy(boardCopy, m.board)
+		m.finished = checkLost(boardCopy)
 	}
 }
