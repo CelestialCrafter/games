@@ -43,7 +43,7 @@ type Model struct {
 }
 
 func NewModel() Model {
-	board := createBoard(boardWidth, boardHeight)
+	board := common.CreateBoard[uint16](boardWidth, boardHeight)
 
 	for i := range 2 {
 		_ = i

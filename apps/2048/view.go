@@ -9,12 +9,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (m Model) View() string {
-	cellStyle := lipgloss.NewStyle().
-		Padding(1, 0).
-		Width(7).
-		Align(lipgloss.Center)
+var cellStyle = lipgloss.NewStyle().
+	Padding(1, 0).
+	Width(7).
+	Align(lipgloss.Center)
 
+func (m Model) View() string {
 	status := ""
 
 	if m.finished {

@@ -2,10 +2,11 @@ package twenty48
 
 import (
 	"math/rand"
-	"reflect"
 
+	"github.com/CelestialCrafter/games/common"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/log"
 )
 
 // @TODO score
@@ -60,15 +61,6 @@ func rotateN90(matrix [][]uint16) {
 	transpose(matrix)
 }
 
-func createBoard(w int, h int) [][]uint16 {
-	board := make([][]uint16, w)
-	for i := range board {
-		board[i] = make([]uint16, h)
-	}
-
-	return board
-}
-
 func findDownPair(board [][]uint16) bool {
 	for i := 0; i < len(board); i++ {
 		for j := 0; j < len(board[0])-1; j++ {
@@ -82,7 +74,7 @@ func findDownPair(board [][]uint16) bool {
 }
 
 func checkLost(originalBoard [][]uint16) bool {
-	board := createBoard(len(originalBoard), len(originalBoard[0]))
+	board := common.CreateBoard[uint16](len(originalBoard), len(originalBoard[0]))
 	copy(board, originalBoard)
 
 	if len(getEmpty(board)) > 0 {
@@ -160,8 +152,10 @@ func (m *Model) process(msg tea.Msg) {
 		return
 	}
 
-	before := createBoard(boardWidth, boardHeight)
-	copy(before, m.board)
+	before := common.CreateBoard[uint16](boardWidth, boardHeight)
+	for i, row := range m.board {
+		copy(before[i], row)
+	}
 
 	switch {
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Up):
@@ -174,7 +168,8 @@ func (m *Model) process(msg tea.Msg) {
 		right(m.board)
 	}
 
-	if !reflect.DeepEqual(before, m.board) {
+	log.Warn(common.CompareBoards(before, m.board))
+	if !common.CompareBoards(before, m.board) {
 		addSquare(m.board)
 		m.finished = checkLost(m.board)
 	}
