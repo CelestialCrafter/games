@@ -168,7 +168,6 @@ func (m *Model) process(msg tea.Msg) {
 		right(m.board)
 	}
 
-	log.Warn(common.CompareBoards(before, m.board))
 	if !common.CompareBoards(before, m.board) {
 		addSquare(m.board)
 		m.finished = checkLost(m.board)
