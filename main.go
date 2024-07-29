@@ -15,12 +15,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
-	"github.com/charmbracelet/ssh"
+	charmSsh "github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/charmbracelet/wish/activeterm"
 	"github.com/charmbracelet/wish/bubbletea"
 	"github.com/charmbracelet/wish/logging"
 	"github.com/muesli/termenv"
+	"golang.org/x/crypto/ssh"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -40,10 +41,11 @@ var (
 	// https://github.com/muesli/termenv/blob/51d72d34e2b9778a31aa5dd79fbdd8cdac50b4d5/profile.go#L12
 	forceColorProfile = flag.Int("force-profile", -1, "force a color profile (seems to only work in ssh mode)")
 )
+
 var programOpts = []tea.ProgramOption{tea.WithAltScreen()}
 
-func createTeaHandler() func(sess ssh.Session) (tea.Model, []tea.ProgramOption) {
-	return func(sess ssh.Session) (tea.Model, []tea.ProgramOption) {
+func createTeaHandler() func(sess charmSsh.Session) (tea.Model, []tea.ProgramOption) {
+	return func(sess charmSsh.Session) (tea.Model, []tea.ProgramOption) {
 		key := sess.PublicKey()
 		if key == nil {
 			log.Error("Key was nil (enable PublicKeyAuth middleware?)")
@@ -73,9 +75,22 @@ func startProgram() {
 		lipgloss.DefaultRenderer().SetColorProfile(termenv.Profile(*forceColorProfile))
 	}
 
-	_, err := tea.NewProgram(NewModel("default"), programOpts...).Run()
+	keyBytes, err := os.ReadFile(".ssh/id_ed25519.pub")
 	if err != nil {
-		log.Error("Could not start program", "error", err)
+		log.Fatal("Could not read ed25519 key file", "error", err)
+	}
+
+	key, _, _, _, err := ssh.ParseAuthorizedKey(keyBytes)
+	if err != nil {
+		log.Fatal("Could not parse ed25519 key", "error", err)
+	}
+	keyType := key.Type()
+	keyData := hex.EncodeToString(key.Marshal())
+
+	m := NewModel(fmt.Sprintf("%v-%v", keyType, keyData))
+	_, err = tea.NewProgram(m, programOpts...).Run()
+	if err != nil {
+		log.Fatal("Could not start program", "error", err)
 	}
 }
 
@@ -97,7 +112,7 @@ func startSSH() {
 	s, err := wish.NewServer(
 		wish.WithAddress(addr),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
-		wish.WithPublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
+		wish.WithPublicKeyAuth(func(ctx charmSsh.Context, key charmSsh.PublicKey) bool {
 			return true
 		}),
 		wish.WithMiddleware(
@@ -108,15 +123,15 @@ func startSSH() {
 	)
 
 	if err != nil {
-		log.Error("Could not start server", "error", err)
+		log.Fatal("Could not start server", "error", err)
 	}
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	log.Info("Starting SSH server", "host", host, "port", port)
 	go func() {
-		if err = s.ListenAndServe(); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
-			log.Error("Could not stop server", "error", err)
+		if err = s.ListenAndServe(); err != nil && !errors.Is(err, charmSsh.ErrServerClosed) {
+			log.Fatal("Could not stop server", "error", err)
 			done <- nil
 		}
 	}()
@@ -125,8 +140,8 @@ func startSSH() {
 	log.Info("Stopping SSH server")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer func() { cancel() }()
-	if err := s.Shutdown(ctx); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
-		log.Error("Could not stop server", "error", err)
+	if err := s.Shutdown(ctx); err != nil && !errors.Is(err, charmSsh.ErrServerClosed) {
+		log.Fatal("Could not stop server", "error", err)
 	}
 }
 
@@ -135,7 +150,7 @@ func main() {
 
 	newDb, err := sqlx.Connect("sqlite3", file)
 	if err != nil {
-		log.Error("Could not open database", "error", err)
+		log.Fatal("Could not open database", "error", err)
 	}
 
 	_ = newDb.MustExec(`
