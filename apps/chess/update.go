@@ -58,6 +58,45 @@ func (m Model) findMove() *chess.Move {
 	return selectedMove
 }
 
+func (m Model) handleMove() func() tea.Msg {
+	move := m.findMove()
+	if move != nil {
+		m.selectedPiece = nil
+		return func() tea.Msg {
+			err := m.game.Move(move)
+			// this should never happen
+			if err != nil {
+				return common.ErrorWithBack(fmt.Errorf("couldn't execute move: %v", err))
+			}
+
+			return nextMoveMsg{}
+		}
+	}
+
+	return nil
+}
+
+func handleEngineMove(game *chess.Game) func() tea.Msg {
+	return func() tea.Msg {
+
+		cmdPos := uci.CmdPosition{Position: game.Position()}
+		cmdGo := uci.CmdGo{MoveTime: time.Second / 100}
+
+		err := engine.Run(cmdPos, cmdGo)
+		if err != nil {
+			return common.ErrorWithBack(fmt.Errorf("engine errored: %v", err))
+		}
+
+		move := engine.SearchResults().BestMove
+		err = game.Move(move)
+		if err != nil {
+			return common.ErrorWithBack(fmt.Errorf("couldn't execute move: %v", err))
+		}
+
+		return nextMoveMsg{}
+	}
+}
+
 // sorry for the mess (not sorry)
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -66,24 +105,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			break
 		}
 
-		return m, func() tea.Msg {
-
-			cmdPos := uci.CmdPosition{Position: m.game.Position()}
-			cmdGo := uci.CmdGo{MoveTime: time.Second / 100}
-
-			err := engine.Run(cmdPos, cmdGo)
-			if err != nil {
-				return common.ErrorWithBack(fmt.Errorf("engine errored: %v", err))
-			}
-
-			move := engine.SearchResults().BestMove
-			err = m.game.Move(move)
-			if err != nil {
-				return common.ErrorWithBack(fmt.Errorf("couldn't execute move: %v", err))
-			}
-
-			return nextMoveMsg{}
-		}
+		return m, handleEngineMove(m.game)
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Quit):
@@ -98,7 +120,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			newModel.height = m.height
 			m = newModel
 			return newModel, newModel.Init()
+		case key.Matches(msg, m.keys.Resign):
+			if m.game.Outcome() != chess.NoOutcome || m.game.Position().Turn() != m.color {
+				break
+			}
+
+			m.game.Resign(m.color)
+			m.selectedPiece = nil
 		case key.Matches(msg, m.keys.Select):
+			if m.game.Outcome() != chess.NoOutcome {
+				break
+			}
+
 			position := m.game.Position()
 			board := position.Board()
 			selectedPiece := board.Piece(m.selectedSquare)
@@ -107,20 +140,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			pieceAlreadySelected := m.selectedPiece != nil && m.selectedPiece.square == m.selectedSquare
 
 			if position.Turn() == m.color && m.selectedPiece != nil {
-				move := m.findMove()
-				if move != nil {
-					m.selectedPiece = nil
-					return m, func() tea.Msg {
-						err := m.game.Move(move)
-						// this should never happen
-						if err != nil {
-							return common.ErrorWithBack(fmt.Errorf("couldn't execute move: %v", err))
-						}
-
-						return nextMoveMsg{}
-					}
+				moveCmd := m.handleMove()
+				if moveCmd != nil {
+					return m, moveCmd
 				}
-
 			}
 
 			if pieceUnowned || pieceAlreadySelected || selectedPiece == chess.NoPiece {
@@ -131,6 +154,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.selectedPiece = &pieceSquare{piece: selectedPiece, square: m.selectedSquare}
 		// PLEASE make sure this is the last case
 		case m.color == chess.White:
+			if m.game.Outcome() != chess.NoOutcome {
+				break
+			}
 			switch {
 
 			case key.Matches(msg, m.keys.Up):
@@ -143,6 +169,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.forwardFile()
 			}
 		case m.color == chess.Black:
+			if m.game.Outcome() != chess.NoOutcome {
+				break
+			}
 			switch {
 			case key.Matches(msg, m.keys.Up):
 				m.downRank()
