@@ -26,11 +26,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.help.ShowAll = !m.help.ShowAll
 		case key.Matches(msg, m.keys.Up, m.keys.Down, m.keys.Left, m.keys.Right):
 			m.process(msg)
-		case key.Matches(msg, m.keys.Reset):
-			newModel := NewModel()
-			newModel.width = m.width
-			newModel.height = m.height
-			return newModel, newModel.Init()
 		case key.Matches(msg, m.keys.Save):
 			return m, func() tea.Msg {
 				bytes := bytes.Buffer{}

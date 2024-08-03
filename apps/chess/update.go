@@ -114,12 +114,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
-		case key.Matches(msg, m.keys.Reset):
-			newModel := NewModel()
-			newModel.width = m.width
-			newModel.height = m.height
-			m = newModel
-			return newModel, newModel.Init()
 		case key.Matches(msg, m.keys.Resign):
 			if m.game.Outcome() != chess.NoOutcome || m.game.Position().Turn() != m.color {
 				break

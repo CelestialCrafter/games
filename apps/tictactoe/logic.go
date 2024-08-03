@@ -13,18 +13,18 @@ func getBoardPosition(position uint) (uint, uint) {
 }
 
 // ./wincondition-explanation.png
-func (m Model) checkGameState() int {
+func (m Model) checkGameState() uint8 {
 	// win condition 1
 	for i := 0; i < len(m.board); i++ {
 		failed := false
 
-		initial := int(m.board[i][0])
+		initial := m.board[i][0]
 		if initial == 0 {
 			failed = true
 		}
 
 		for j := 0; j < len(m.board[0]); j++ {
-			current := int(m.board[i][j])
+			current := m.board[i][j]
 
 			if initial != current {
 				failed = true
@@ -42,13 +42,13 @@ func (m Model) checkGameState() int {
 	{
 		failed := false
 
-		initial := int(m.board[0][0])
+		initial := m.board[0][0]
 		if initial == 0 {
 			failed = true
 		}
 
 		for i := 0; i < len(m.board); i++ {
-			current := int(m.board[i][i])
+			current := m.board[i][i]
 			if initial != current {
 				failed = true
 				break
@@ -65,13 +65,13 @@ func (m Model) checkGameState() int {
 
 		failed := false
 
-		initial := int(m.board[0][len(m.board)-1])
+		initial := m.board[0][len(m.board)-1]
 		if initial == 0 {
 			failed = true
 		}
 
 		for i := len(m.board) - 1; i >= 0; i-- {
-			current := int(m.board[len(m.board)-1-i][i])
+			current := m.board[len(m.board)-1-i][i]
 			if initial != current {
 				failed = true
 				break
@@ -85,11 +85,11 @@ func (m Model) checkGameState() int {
 	}
 	// win condition 3
 	for i := 0; i < len(m.board[0]); i++ {
-		initial := int(m.board[0][i])
+		initial := m.board[0][i]
 		failed := false
 
 		for j := 0; j < len(m.board); j++ {
-			current := int(m.board[j][i])
+			current := m.board[j][i]
 			if current == 0 || initial != current {
 				failed = true
 				break
@@ -105,7 +105,7 @@ func (m Model) checkGameState() int {
 	failed := false
 	for i := 0; i < len(m.board[0]); i++ {
 		for j := 0; j < len(m.board[0]); j++ {
-			if int(m.board[i][j]) == 0 {
+			if m.board[i][j] == 0 {
 				failed = true
 				break
 			}
@@ -119,55 +119,63 @@ func (m Model) checkGameState() int {
 	return 0
 }
 
-func (m Model) place(position uint) (ok bool) {
+func (m Model) place(position uint, player uint8) {
 	x, y := getBoardPosition(position)
 	cell := &m.board[x][y]
 
-	if *cell != 0 {
-		return
-	}
-
-	*cell = m.turn
-
-	return true
+	*cell = player
 }
 
-func (m *Model) process(msg tea.Msg) {
-	var ok bool
+func (m Model) placeCheck(position uint) (ok bool) {
+	x, y := getBoardPosition(position)
+	cell := &m.board[x][y]
+	return *cell == 0
 
-	if m.winner != 0 {
-		return
+}
+
+func (m *Model) process(msg tea.Msg) (tea.Msg, bool) {
+	if m.winner != 0 || m.turn != m.player || m.turn == 0 {
+		return nil, false
 	}
+
+	var p uint
 
 	switch {
 	// top to bottom
 	case key.Matches(msg.(tea.KeyMsg), m.keys.One):
-		ok = m.place(1)
+		p = 1
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Two):
-		ok = m.place(2)
+		p = 2
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Three):
-		ok = m.place(3)
+		p = 3
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Four):
-		ok = m.place(4)
+		p = 4
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Five):
-		ok = m.place(5)
+		p = 5
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Six):
-		ok = m.place(6)
+		p = 6
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Seven):
-		ok = m.place(7)
+		p = 7
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Eight):
-		ok = m.place(8)
+		p = 8
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Nine):
-		ok = m.place(9)
+		p = 9
 	}
 
-	if ok {
-		m.winner = m.checkGameState()
-
-		if m.turn == 2 {
-			m.turn = 1
-		} else {
-			m.turn = 2
-		}
+	if !m.placeCheck(p) {
+		return nil, false
 	}
+
+	var nextTurn uint8
+	if m.player == 1 {
+		nextTurn = 2
+	} else {
+		nextTurn = 1
+	}
+
+	return moveMsg{
+		position: p,
+		player:   m.player,
+		turn:     nextTurn,
+	}, true
 }

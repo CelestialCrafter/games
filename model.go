@@ -8,6 +8,7 @@ import (
 	"github.com/CelestialCrafter/games/apps/saves"
 	"github.com/CelestialCrafter/games/apps/tictactoe"
 	"github.com/CelestialCrafter/games/common"
+	"github.com/CelestialCrafter/games/multiplayer"
 	"github.com/CelestialCrafter/games/saveManager"
 	"github.com/CelestialCrafter/games/selector"
 	"github.com/CelestialCrafter/games/styles"
@@ -28,19 +29,21 @@ type KeyMap struct {
 	common.ArrowsKeyMap
 	Select key.Binding
 	Quit   key.Binding
+	Reset  key.Binding
 }
 
 type MainModel struct {
-	state       sessionState
-	saveManager tea.Model
-	selector    tea.Model
-	app         tea.Model
-	keys        KeyMap
-	err         *common.ErrorMsg
-	userId      string
-	selected    int
-	width       int
-	height      int
+	state        sessionState
+	saveManager  tea.Model
+	selector     tea.Model
+	app          tea.Model
+	currentAppId *uint
+	keys         KeyMap
+	err          *common.ErrorMsg
+	userId       string
+	selected     int
+	width        int
+	height       int
 }
 
 func NewModel(userId string) MainModel {
@@ -54,6 +57,7 @@ func NewModel(userId string) MainModel {
 			ArrowsKeyMap: common.NewArrowsKeyMap(),
 			Select:       key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select")),
 			Quit:         key.NewBinding(key.WithKeys("ctrl+c"), key.WithHelp("ctrl+c", "quit")),
+			Reset:        common.NewResetBinding(),
 		},
 	}
 }
@@ -77,13 +81,45 @@ func (m MainModel) Init() tea.Cmd {
 	return tea.Batch(m.saveManager.Init(), m.selector.Init())
 }
 
+func (m MainModel) initializeApp(id uint) tea.Cmd {
+	return tea.Sequence(
+		m.app.Init(),
+		func() tea.Msg {
+			return saveManager.TryLoad{
+				ID: id,
+			}
+		},
+		func() tea.Msg {
+			return tea.WindowSizeMsg{
+				Width:  m.width,
+				Height: m.height,
+			}
+		},
+		func() tea.Msg {
+			return multiplayer.SelfPlayerMsg(m.userId)
+		},
+	)
+}
+
 func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
+		case key.Matches(msg, m.keys.Reset):
+			if m.app == nil || m.currentAppId == nil {
+				break
+			}
+
+			return m, tea.Sequence(
+				func() tea.Msg { return common.BackMsg{} },
+				func() tea.Msg {
+					return selector.PlayMsg{ID: *m.currentAppId}
+				},
+			)
 		case key.Matches(msg, m.keys.Quit):
+			m.app.Update(common.BackMsg{})
 			return m, tea.Quit
 		case m.err != nil && key.Matches(msg, m.keys.Left):
 			m.selected = max(m.selected-1, 0)
@@ -101,25 +137,15 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case common.BackMsg:
 		m.state = selectorView
+		m.app.Update(msg)
 		m.app = nil
+		m.currentAppId = nil
 	case selector.PlayMsg:
 		m.state = gameView
 		m.app = m.NewGame(msg.ID)
+		m.currentAppId = &msg.ID
 
-		return m, tea.Sequence(
-			m.app.Init(),
-			func() tea.Msg {
-				return saveManager.TryLoad{
-					ID: msg.ID,
-				}
-			},
-			func() tea.Msg {
-				return tea.WindowSizeMsg{
-					Width:  m.width,
-					Height: m.height,
-				}
-			},
-		)
+		return m, m.initializeApp(msg.ID)
 	case common.ErrorMsg:
 		if msg.Err != nil {
 			log.Error("game sent error message", "error", msg.Err)

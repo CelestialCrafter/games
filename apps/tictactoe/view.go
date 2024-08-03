@@ -24,8 +24,7 @@ var oStyle = lipgloss.NewStyle().
 	Inherit(styles.StatusStyle).
 	Foreground(oColor)
 
-func winStatus(winner int) string {
-
+func winStatus(winner uint8) string {
 	// draw
 	if winner == 3 {
 		return styles.StatusStyle.Render("it's a draw!")
@@ -42,8 +41,7 @@ func winStatus(winner int) string {
 	return fmt.Sprintf("%v %v", winnerText, styles.StatusStyle.Render("wins!"))
 }
 
-func turnTextStatus(turn int) string {
-
+func turnTextStatus(turn uint8) string {
 	var turnText string
 	if turn == 1 {
 		turnText = xStyle.Render("x")
@@ -55,14 +53,27 @@ func turnTextStatus(turn int) string {
 
 }
 
+func playerTextStatus(player uint8) string {
+	var playerText string
+	if player == 1 {
+		playerText = xStyle.Render("x")
+	} else {
+		playerText = oStyle.Render("o")
+	}
+
+	return fmt.Sprintf(styles.StatusStyle.Render("you're %v"), playerText)
+}
+
 func (m Model) View() string {
 
 	var status string
 	if m.winner == 0 {
-		status = turnTextStatus(int(m.turn))
+		status = turnTextStatus(m.turn)
 	} else {
 		status = winStatus(m.winner)
 	}
+
+	status = lipgloss.JoinVertical(lipgloss.Top, status, playerTextStatus(m.player))
 
 	// render cell colors
 	board := common.RenderBoard(m.board, func(cell uint8) string {
@@ -92,13 +103,16 @@ func (m Model) View() string {
 	board = lipgloss.Place(m.width, lipgloss.Height(board), lipgloss.Center, lipgloss.Top, board)
 
 	help := m.help.View(m.keys)
+	multiplayer := m.multiplayer.View()
 
 	availableHeight := m.height
 	availableHeight -= lipgloss.Height(help)
+	availableHeight -= lipgloss.Height(multiplayer)
 
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
 		lipgloss.NewStyle().Height(availableHeight).Render(board),
+		multiplayer,
 		help,
 	)
 }

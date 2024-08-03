@@ -13,6 +13,8 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/muesli/termenv v0.15.2
 	github.com/notnil/chess v1.9.0
+	github.com/puzpuzpuz/xsync/v3 v3.4.0
+	golang.org/x/crypto v0.21.0
 )
 
 require (
@@ -34,7 +36,7 @@ require (
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sahilm/fuzzy v0.1.1-0.20230530133925-c48e322e2a8f // indirect
-	golang.org/x/crypto v0.22.0 // indirect
+	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/term v0.19.0 // indirect

@@ -2,8 +2,10 @@ package tictactoe
 
 import (
 	"math/rand"
+	"sync/atomic"
 
 	"github.com/CelestialCrafter/games/common"
+	"github.com/CelestialCrafter/games/multiplayer"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -20,14 +22,13 @@ type KeyMap struct {
 	Eight key.Binding
 	Nine  key.Binding
 
-	Save  key.Binding
-	Help  key.Binding
-	Quit  key.Binding
-	Reset key.Binding
+	Save key.Binding
+	Help key.Binding
+	Quit key.Binding
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Save, k.Help, k.Quit, k.Reset}
+	return []key.Binding{k.Save, k.Help, k.Quit}
 }
 
 func (k KeyMap) FullHelp() [][]key.Binding {
@@ -45,18 +46,25 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 			k.Eight,
 			k.Nine,
 		},
-		{k.Save, k.Help, k.Quit, k.Reset},
+		{k.Save, k.Help, k.Quit},
 	}
 }
 
 type Model struct {
-	keys   KeyMap
-	help   help.Model
-	turn   uint8
-	board  [][]uint8
-	winner int
-	height int
-	width  int
+	keys        KeyMap
+	help        help.Model
+	multiplayer multiplayer.Model
+	turn        uint8
+	player      uint8
+	board       [][]uint8
+	winner      uint8
+	height      int
+	width       int
+}
+
+type lobbyData struct {
+	nextPlayer   atomic.Int32
+	startingTurn uint8
 }
 
 func NewModel() Model {
@@ -65,7 +73,7 @@ func NewModel() Model {
 		board[i] = make([]uint8, 3)
 	}
 
-	return Model{
+	m := Model{
 		keys: KeyMap{
 			One:   key.NewBinding(key.WithKeys("1"), key.WithHelp("1", "one")),
 			Two:   key.NewBinding(key.WithKeys("2"), key.WithHelp("2", "two")),
@@ -79,14 +87,24 @@ func NewModel() Model {
 			Save:  key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "save")),
 			Help:  common.NewHelpBinding(),
 			Quit:  common.NewBackBinding(),
-			Reset: common.NewResetBinding(),
 		},
-		help:  help.New(),
+		help: help.New(),
+		multiplayer: multiplayer.NewModel(2, common.TicTacToe.ID, func() interface{} {
+			return &lobbyData{
+				nextPlayer:   atomic.Int32{},
+				startingTurn: uint8(rand.Intn(2)) + 1,
+			}
+		}),
 		board: board,
-		turn:  uint8(rand.Intn(2)) + 1,
 	}
+
+	lobby, _ := m.multiplayer.Element.Value.(*multiplayer.Lobby)
+	data, _ := lobby.Data.(*lobbyData)
+	m.player = uint8(data.nextPlayer.Add(1))
+
+	return m
 }
 
 func (m Model) Init() tea.Cmd {
-	return nil
+	return m.multiplayer.Init()
 }

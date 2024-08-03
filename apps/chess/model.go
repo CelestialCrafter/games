@@ -26,7 +26,6 @@ type KeyMap struct {
 	Save   key.Binding
 	Help   key.Binding
 	Quit   key.Binding
-	Reset  key.Binding
 	Select key.Binding
 	Resign key.Binding
 }
@@ -36,7 +35,6 @@ func (k KeyMap) ShortHelp() []key.Binding {
 		k.Save,
 		k.Help,
 		k.Quit,
-		k.Reset,
 		k.Select,
 		k.Resign,
 	}
@@ -45,7 +43,7 @@ func (k KeyMap) ShortHelp() []key.Binding {
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Up, k.Down, k.Left, k.Right},
-		{k.Save, k.Help, k.Quit, k.Reset},
+		{k.Save, k.Help, k.Quit},
 		{k.Select, k.Resign},
 	}
 }
@@ -81,7 +79,6 @@ func NewModel() Model {
 			Save:         common.NewSaveBinding(),
 			Help:         common.NewHelpBinding(),
 			Quit:         common.NewBackBinding(),
-			Reset:        common.NewResetBinding(),
 			Select:       key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select piece")),
 			// dont ask me why it's p
 			Resign: key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "resign game")),
