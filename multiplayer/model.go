@@ -29,6 +29,7 @@ type Lobby struct {
 	ID         string
 	MaxPlayers int
 	Ready      bool
+	Game       uint
 	Data       interface{}
 }
 
@@ -43,7 +44,6 @@ func (l Lobby) Broadcast(msg tea.Msg) {
 	})
 }
 
-// extra dependency but i like xsync api more so deal with it ;3
 var Players = xsync.NewMapOf[string, *Player]()
 var lobbies = map[uint]*list.List{
 	common.TicTacToe.ID: list.New(),
@@ -69,6 +69,7 @@ func NewModel(players int, game uint, initializeData initializeDataFunc) Model {
 	var selectedElement *list.Element = nil
 
 	gameLobbies := lobbies[game]
+	// find existing free lobby
 	for element := gameLobbies.Front(); element != nil; element = element.Next() {
 		lobby, _ := element.Value.(*Lobby)
 
@@ -80,6 +81,7 @@ func NewModel(players int, game uint, initializeData initializeDataFunc) Model {
 		break
 	}
 
+	// create lobby if none were open
 	if selectedElement == nil {
 		hasher := sha1.New()
 		hasher.Write([]byte(strconv.Itoa(int(time.Now().UnixNano())) + strconv.Itoa(int(game))))
@@ -87,6 +89,7 @@ func NewModel(players int, game uint, initializeData initializeDataFunc) Model {
 		lobby := &Lobby{
 			MaxPlayers: players,
 			Players:    xsync.NewMapOf[string, *Player](),
+			Game:       game,
 			ID:         hex.EncodeToString(hasher.Sum(nil)),
 		}
 
@@ -95,7 +98,6 @@ func NewModel(players int, game uint, initializeData initializeDataFunc) Model {
 
 	lobby := selectedElement.Value.(*Lobby)
 	return Model{
-		game:           game,
 		initializeData: initializeData,
 		Element:        selectedElement,
 		Lobby:          lobby,
@@ -106,15 +108,27 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
+// @TODO cleanup the lobby from the lobbies list if players < 1
+func Cleanup(lobby *Lobby, id string) {
+	lobby.Players.Delete(id)
+	lobby.Broadcast(DisconnectMsg(id))
+}
+
+func (m Model) startLobby() {
+	lobby, _ := m.Element.Value.(*Lobby)
+	lobby.Data = m.initializeData(lobby.Players)
+	lobby.Ready = true
+	m.Lobby.Broadcast(InitialReadyMsg{})
+}
+
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	// cleanup & disconnect on game exit
 	case common.BackMsg:
-		m.Lobby.Broadcast(DisconnectMsg(m.Self.ID))
-		m.Lobby.Players.Delete(m.Self.ID)
-		if m.Lobby.Players.Size() < 1 {
-			lobbies[m.game].Remove(m.Element)
-		}
+		Cleanup(m.Lobby, m.Self.ID)
+	// force view update
 	case ConnectMsg:
+	// join lobby when self is emitted
 	case SelfPlayerMsg:
 		var ok bool
 		m.Self, ok = Players.Load(string(msg))
@@ -128,10 +142,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 		m.Lobby.Broadcast(ConnectMsg(m.Self.ID))
 		if lobby.hasMaxPlayers() {
-			lobby, _ := m.Element.Value.(*Lobby)
-			lobby.Data = m.initializeData(lobby.Players)
-			lobby.Ready = true
-			m.Lobby.Broadcast(InitialReadyMsg{})
+			m.startLobby()
 		}
 
 	}
