@@ -25,9 +25,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case multiplayer.InitialReadyMsg:
-		lobby, _ := m.multiplayer.Element.Value.(*multiplayer.Lobby)
-		data, _ := lobby.Data.(*lobbyData)
+		data, _ := m.multiplayer.Lobby.Data.(*lobbyData)
 		m.turn = data.startingTurn
+		m.player = data.colors[m.multiplayer.Self.ID]
+	case multiplayer.DisconnectMsg:
+		data, _ := m.multiplayer.Lobby.Data.(*lobbyData)
+		loser := data.colors[string(msg)]
+
+		if loser == 1 {
+			m.winner = 2
+		} else {
+			m.winner = 1
+		}
 	case moveMsg:
 		m.place(msg.position, msg.player)
 		m.turn = msg.turn
@@ -57,7 +66,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			m.multiplayer.Broadcast(move)
+			m.multiplayer.Lobby.Broadcast(move)
 		case key.Matches(msg, m.keys.Save):
 			cmds = append(cmds, func() tea.Msg {
 				bytes := bytes.Buffer{}

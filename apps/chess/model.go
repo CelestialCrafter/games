@@ -2,14 +2,15 @@ package chess
 
 import (
 	"fmt"
-	"math/rand"
 
 	"github.com/CelestialCrafter/games/common"
+	"github.com/CelestialCrafter/games/multiplayer"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/notnil/chess"
 	"github.com/notnil/chess/uci"
+	"github.com/puzpuzpuz/xsync/v3"
 )
 
 var engine *uci.Engine
@@ -19,7 +20,7 @@ type pieceSquare struct {
 	square chess.Square
 }
 
-type nextMoveMsg struct{}
+type moveMsg *chess.Move
 
 type KeyMap struct {
 	common.ArrowsKeyMap
@@ -60,19 +61,16 @@ type Model struct {
 	color          chess.Color
 	height         int
 	width          int
+	multiplayer    multiplayer.Model
+	ready          bool
+}
+
+type lobbyData struct {
+	colors map[string]chess.Color
 }
 
 func NewModel() Model {
-	// @TODO support multiplayer
-	color := chess.Color(rand.Intn(2) + 1)
-	var selectedSquare chess.Square
-	if color == chess.White {
-		selectedSquare = chess.A1
-	} else {
-		selectedSquare = chess.H8
-	}
-
-	return Model{
+	m := Model{
 		help: help.New(),
 		keys: KeyMap{
 			ArrowsKeyMap: common.NewArrowsKeyMap(),
@@ -83,13 +81,35 @@ func NewModel() Model {
 			// dont ask me why it's p
 			Resign: key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "resign game")),
 		},
-		selectedSquare: selectedSquare,
-		color:          color,
 		game:           chess.NewGame(),
+		selectedSquare: chess.A1,
+		multiplayer: multiplayer.NewModel(
+			2,
+			common.Chess.ID,
+			func(players *xsync.MapOf[string, *multiplayer.Player]) interface{} {
+				nextPlayer := 1
+				colors := map[string]chess.Color{}
+
+				players.Range(func(id string, _ *multiplayer.Player) bool {
+					colors[id] = chess.Color(nextPlayer)
+					nextPlayer++
+
+					return true
+				})
+
+				return &lobbyData{
+					colors,
+				}
+			},
+		),
 	}
+
+	return m
 }
 
 func (m Model) Init() tea.Cmd {
+	// @TODO remove this return once multiplayer can be optional
+	return m.multiplayer.Init()
 	return func() tea.Msg {
 		if engine == nil {
 			var err error
@@ -104,6 +124,6 @@ func (m Model) Init() tea.Cmd {
 			return common.ErrorWithBack(fmt.Errorf("couldn't initialize stockfish engine: %v", err))
 		}
 
-		return nextMoveMsg{}
+		return handleEngineMove(m.game)
 	}
 }

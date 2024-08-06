@@ -119,7 +119,10 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				},
 			)
 		case key.Matches(msg, m.keys.Quit):
-			m.app.Update(common.BackMsg{})
+			if m.app != nil {
+				m.app.Update(common.BackMsg{})
+			}
+
 			return m, tea.Quit
 		case m.err != nil && key.Matches(msg, m.keys.Left):
 			m.selected = max(m.selected-1, 0)
@@ -128,6 +131,10 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.selected = min(m.selected+1, 1)
 		case m.err != nil && key.Matches(msg, m.keys.Select):
 			if m.selected == 1 {
+				if m.app != nil {
+					m.app.Update(common.BackMsg{})
+				}
+
 				return m, tea.Quit
 			}
 

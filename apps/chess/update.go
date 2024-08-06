@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/CelestialCrafter/games/common"
+	"github.com/CelestialCrafter/games/multiplayer"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/notnil/chess"
@@ -58,19 +59,11 @@ func (m Model) findMove() *chess.Move {
 	return selectedMove
 }
 
-func (m Model) handleMove() func() tea.Msg {
+func (m Model) handleMove() tea.Msg {
 	move := m.findMove()
 	if move != nil {
 		m.selectedPiece = nil
-		return func() tea.Msg {
-			err := m.game.Move(move)
-			// this should never happen
-			if err != nil {
-				return common.ErrorWithBack(fmt.Errorf("couldn't execute move: %v", err))
-			}
-
-			return nextMoveMsg{}
-		}
+		return moveMsg(move)
 	}
 
 	return nil
@@ -78,7 +71,6 @@ func (m Model) handleMove() func() tea.Msg {
 
 func handleEngineMove(game *chess.Game) func() tea.Msg {
 	return func() tea.Msg {
-
 		cmdPos := uci.CmdPosition{Position: game.Position()}
 		cmdGo := uci.CmdGo{MoveTime: time.Second / 100}
 
@@ -88,24 +80,20 @@ func handleEngineMove(game *chess.Game) func() tea.Msg {
 		}
 
 		move := engine.SearchResults().BestMove
-		err = game.Move(move)
-		if err != nil {
-			return common.ErrorWithBack(fmt.Errorf("couldn't execute move: %v", err))
-		}
-
-		return nextMoveMsg{}
+		return moveMsg(move)
 	}
 }
 
 // sorry for the mess (not sorry)
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case nextMoveMsg:
-		if m.color == m.game.Position().Turn() {
-			break
-		}
+	case moveMsg:
+		_ = m.game.Move(msg)
+	case multiplayer.DisconnectMsg:
+		data, _ := m.multiplayer.Lobby.Data.(*lobbyData)
+		loser := data.colors[string(msg)]
 
-		return m, handleEngineMove(m.game)
+		m.game.Resign(loser)
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Quit):
@@ -114,15 +102,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
-		case key.Matches(msg, m.keys.Resign):
-			if m.game.Outcome() != chess.NoOutcome || m.game.Position().Turn() != m.color {
-				break
-			}
-
-			m.game.Resign(m.color)
-			m.selectedPiece = nil
 		case key.Matches(msg, m.keys.Select):
-			if m.game.Outcome() != chess.NoOutcome {
+			if !m.ready || m.game.Outcome() != chess.NoOutcome {
 				break
 			}
 
@@ -134,9 +115,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			pieceAlreadySelected := m.selectedPiece != nil && m.selectedPiece.square == m.selectedSquare
 
 			if position.Turn() == m.color && m.selectedPiece != nil {
-				moveCmd := m.handleMove()
-				if moveCmd != nil {
-					return m, moveCmd
+				newMoveMsg := m.handleMove()
+				if newMoveMsg != nil {
+					m.multiplayer.Lobby.Broadcast(newMoveMsg)
 				}
 			}
 
@@ -181,10 +162,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.help.Width = msg.Width
 		m.width = msg.Width
 		m.height = msg.Height
+	case multiplayer.InitialReadyMsg:
+		data, _ := m.multiplayer.Lobby.Data.(*lobbyData)
+
+		m.color = data.colors[m.multiplayer.Self.ID]
+
+		if m.color == chess.White {
+			m.selectedSquare = chess.A1
+		} else {
+			m.selectedSquare = chess.H8
+		}
+
+		m.ready = true
 	}
 
 	m.selectedSquare = chess.Square(math.Max(0, float64(m.selectedSquare)))
 	m.selectedSquare = chess.Square(math.Min(boardSize*boardSize-1, float64(m.selectedSquare)))
 
-	return m, nil
+	var mutliplayerCmd tea.Cmd
+	m.multiplayer, mutliplayerCmd = m.multiplayer.Update(msg)
+
+	return m, mutliplayerCmd
 }

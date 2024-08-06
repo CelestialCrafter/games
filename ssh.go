@@ -52,9 +52,14 @@ func createTeaHandler(sess ssh.Session) *tea.Program {
 		ID:      id,
 	})
 
+	// wait for disconnect and handle it
 	go func() {
 		program.Wait()
-		multiplayer.Players.Delete(id)
+		multiplayer.Players.Compute(id, func(player *multiplayer.Player, loaded bool) (_ *multiplayer.Player, delete bool) {
+			player.Lobby.Broadcast(multiplayer.DisconnectMsg(id))
+			multiplayer.Players.Delete(id)
+			return nil, false
+		})
 	}()
 
 	return program

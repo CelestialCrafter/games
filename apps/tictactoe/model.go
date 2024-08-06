@@ -2,13 +2,13 @@ package tictactoe
 
 import (
 	"math/rand"
-	"sync/atomic"
 
 	"github.com/CelestialCrafter/games/common"
 	"github.com/CelestialCrafter/games/multiplayer"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/puzpuzpuz/xsync/v3"
 )
 
 type KeyMap struct {
@@ -57,13 +57,14 @@ type Model struct {
 	turn        uint8
 	player      uint8
 	board       [][]uint8
+	ready       bool
 	winner      uint8
 	height      int
 	width       int
 }
 
 type lobbyData struct {
-	nextPlayer   atomic.Int32
+	colors       map[string]uint8
 	startingTurn uint8
 }
 
@@ -89,18 +90,28 @@ func NewModel() Model {
 			Quit:  common.NewBackBinding(),
 		},
 		help: help.New(),
-		multiplayer: multiplayer.NewModel(2, common.TicTacToe.ID, func() interface{} {
-			return &lobbyData{
-				nextPlayer:   atomic.Int32{},
-				startingTurn: uint8(rand.Intn(2)) + 1,
-			}
-		}),
+		multiplayer: multiplayer.NewModel(
+			2,
+			common.TicTacToe.ID,
+			func(players *xsync.MapOf[string, *multiplayer.Player]) interface{} {
+				var nextPlayer uint8 = 1
+				colors := map[string]uint8{}
+
+				players.Range(func(id string, _ *multiplayer.Player) bool {
+					colors[id] = nextPlayer
+					nextPlayer++
+
+					return true
+				})
+
+				return &lobbyData{
+					colors:       colors,
+					startingTurn: uint8(rand.Intn(2)) + 1,
+				}
+			},
+		),
 		board: board,
 	}
-
-	lobby, _ := m.multiplayer.Element.Value.(*multiplayer.Lobby)
-	data, _ := lobby.Data.(*lobbyData)
-	m.player = uint8(data.nextPlayer.Add(1))
 
 	return m
 }

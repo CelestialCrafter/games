@@ -15,7 +15,7 @@ const boardSize = 8
 
 var cellStyle = lipgloss.NewStyle().Padding(1, 3)
 
-func cellCheckerboard(style lipgloss.Style, i int) {
+func cellCheckerboard(style lipgloss.Style, i int) (changed bool) {
 	row := i / boardSize
 	col := i % boardSize
 
@@ -26,11 +26,17 @@ func cellCheckerboard(style lipgloss.Style, i int) {
 		// white
 		style.Background(styles.Colors.Accent)
 	}
+
+	return true
 }
 
-func (m Model) piecePossibleMoves(style lipgloss.Style, currentSquare chess.Square) {
+func (m Model) piecePossibleMoves(style lipgloss.Style, currentSquare chess.Square) (changed bool) {
 	position := m.game.Position()
 	board := position.Board()
+	if !m.ready {
+		return
+	}
+
 	for _, move := range position.ValidMoves() {
 		colorsMatch := board.Piece(move.S1()).Color() == m.color
 		destIsCurrent := move.S2() == currentSquare
@@ -39,35 +45,48 @@ func (m Model) piecePossibleMoves(style lipgloss.Style, currentSquare chess.Squa
 
 		if colorsMatch && destIsCurrent && (srcIsSelectedSquare || srcIsSelectedPiece) {
 			style.Background(styles.CellColors[0])
+			return true
 		}
 	}
+
+	return
 }
 
-func pieceSelected(style lipgloss.Style, current chess.Square, selected *pieceSquare) {
+func pieceSelected(style lipgloss.Style, current chess.Square, selected *pieceSquare) (changed bool) {
 	if selected != nil && selected.square == current {
 		style.Background(styles.CellColors[1])
+		changed = true
 	}
+
+	return
 }
 
-func cellSelected(style lipgloss.Style, current chess.Square, selected chess.Square) {
+func cellSelected(style lipgloss.Style, current chess.Square, selected chess.Square) (changed bool) {
 	if selected == current {
 		style.Background(styles.CellColors[2])
+		changed = true
 	}
+
+	return
 }
 
-func cellMarign(style lipgloss.Style, i int) {
+func cellMargin(style lipgloss.Style, i int) (changed bool) {
 	row := i / boardSize
 	col := i % boardSize
 
 	if row == 0 {
 		style.MarginTop(3)
+		changed = true
 	}
 	if col == boardSize-1 {
 		style.MarginRight(6)
+		changed = true
 	}
+
+	return
 }
 
-func pieceColor(style lipgloss.Style, piece chess.Piece) chess.Piece {
+func pieceColor(style lipgloss.Style, piece chess.Piece) (bool, chess.Piece) {
 	blackPiece := piece
 	if blackPiece.Color() == chess.White {
 		style.Foreground(lipgloss.Color("0"))
@@ -76,7 +95,7 @@ func pieceColor(style lipgloss.Style, piece chess.Piece) chess.Piece {
 		style.Foreground(lipgloss.Color("7"))
 	}
 
-	return blackPiece
+	return true, blackPiece
 }
 
 // sorry for the mess (not sorry)
@@ -88,6 +107,13 @@ func (m Model) View() string {
 	method := m.game.Method()
 	if outcome != chess.NoOutcome {
 		statusSlice = append(statusSlice, fmt.Sprint(outcome), fmt.Sprint(method))
+	}
+
+	var status string
+	if m.ready {
+		status = styles.StatusStyle.Render(strings.Join(statusSlice, " • "))
+	} else {
+		status = ""
 	}
 
 	// board rendering
@@ -121,21 +147,33 @@ func (m Model) View() string {
 	i := -1
 	board := common.RenderBoard(sliceChessBoard, func(piece *pieceSquare) string {
 		i++
+		var changed bool
 		newCellStyle := cellStyle.Copy()
 
-		cellCheckerboard(newCellStyle, i)
+		cellMargin(newCellStyle, i)
 		if piece == nil {
+			cellCheckerboard(newCellStyle, i)
 			return newCellStyle.Render(" ")
 		}
 
-		m.piecePossibleMoves(
-			newCellStyle,
-			piece.square,
-		)
-		pieceSelected(newCellStyle, piece.square, m.selectedPiece)
-		cellSelected(newCellStyle, piece.square, m.selectedSquare)
-		cellMarign(newCellStyle, i)
-		newPiece := pieceColor(newCellStyle, piece.piece)
+		changed = pieceSelected(newCellStyle, piece.square, m.selectedPiece)
+
+		if !changed {
+			changed = cellSelected(newCellStyle, piece.square, m.selectedSquare)
+		}
+
+		if !changed {
+			changed = m.piecePossibleMoves(
+				newCellStyle,
+				piece.square,
+			)
+		}
+
+		if !changed {
+			cellCheckerboard(newCellStyle, i)
+		}
+
+		_, newPiece := pieceColor(newCellStyle, piece.piece)
 
 		return newCellStyle.Render(newPiece.String())
 	})
@@ -171,7 +209,7 @@ func (m Model) View() string {
 	board = lipgloss.JoinVertical(
 		lipgloss.Top,
 		board,
-		styles.StatusStyle.Render(strings.Join(statusSlice, " • ")),
+		status,
 	)
 	board = lipgloss.Place(
 		m.width,
@@ -183,13 +221,16 @@ func (m Model) View() string {
 
 	// rendering
 	help := m.help.View(m.keys)
+	multiplayer := m.multiplayer.View()
 
 	availableHeight := m.height
 	availableHeight -= lipgloss.Height(help)
+	availableHeight -= lipgloss.Height(multiplayer)
 
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
 		lipgloss.NewStyle().Height(availableHeight).Render(board),
+		multiplayer,
 		help,
 	)
 }

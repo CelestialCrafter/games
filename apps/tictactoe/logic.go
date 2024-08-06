@@ -134,7 +134,7 @@ func (m Model) placeCheck(position uint) (ok bool) {
 }
 
 func (m *Model) process(msg tea.Msg) (tea.Msg, bool) {
-	if m.winner != 0 || m.turn != m.player || m.turn == 0 {
+	if m.winner != 0 || m.turn != m.player || m.ready {
 		return nil, false
 	}
 

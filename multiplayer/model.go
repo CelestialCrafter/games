@@ -36,25 +36,37 @@ func (l Lobby) hasMaxPlayers() bool {
 	return l.Players.Size() >= l.MaxPlayers
 }
 
+func (l Lobby) Broadcast(msg tea.Msg) {
+	l.Players.Range(func(_ string, player *Player) bool {
+		go player.Program.Send(msg)
+		return true
+	})
+}
+
 // extra dependency but i like xsync api more so deal with it ;3
 var Players = xsync.NewMapOf[string, *Player]()
 var lobbies = map[uint]*list.List{
 	common.TicTacToe.ID: list.New(),
+	common.Chess.ID:     list.New(),
 }
+
+type initializeDataFunc func(*xsync.MapOf[string, *Player]) interface{}
 
 type Model struct {
-	game    uint
-	self    *Player
-	Element *list.Element
+	game           uint
+	initializeData initializeDataFunc
+	Self           *Player
+	Element        *list.Element
+	Lobby          *Lobby
 }
 
-func NewModel(players int, game uint, initializeData func() interface{}) Model {
+func NewModel(players int, game uint, initializeData initializeDataFunc) Model {
 	_, ok := lobbies[game]
 	if !ok {
 		panic(fmt.Sprintf("game id not in lobbies map: %v", game))
 	}
 
-	var lobbyElement *list.Element = nil
+	var selectedElement *list.Element = nil
 
 	gameLobbies := lobbies[game]
 	for element := gameLobbies.Front(); element != nil; element = element.Next() {
@@ -64,28 +76,29 @@ func NewModel(players int, game uint, initializeData func() interface{}) Model {
 			continue
 		}
 
-		lobbyElement = element
+		selectedElement = element
 		break
 	}
 
-	if lobbyElement == nil {
+	if selectedElement == nil {
 		hasher := sha1.New()
-		// timestamp + game id but with a bunch of type conversions
 		hasher.Write([]byte(strconv.Itoa(int(time.Now().UnixNano())) + strconv.Itoa(int(game))))
 
 		lobby := &Lobby{
 			MaxPlayers: players,
 			Players:    xsync.NewMapOf[string, *Player](),
 			ID:         hex.EncodeToString(hasher.Sum(nil)),
-			Data:       initializeData(),
 		}
 
-		lobbyElement = gameLobbies.PushFront(lobby)
+		selectedElement = gameLobbies.PushFront(lobby)
 	}
 
+	lobby := selectedElement.Value.(*Lobby)
 	return Model{
-		game:    game,
-		Element: lobbyElement,
+		game:           game,
+		initializeData: initializeData,
+		Element:        selectedElement,
+		Lobby:          lobby,
 	}
 }
 
@@ -93,38 +106,32 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Broadcast(msg tea.Msg) {
-	lobby, _ := m.Element.Value.(*Lobby)
-	lobby.Players.Range(func(_ string, player *Player) bool {
-		go player.Program.Send(msg)
-		return true
-	})
-}
-
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.BackMsg:
-		lobby, _ := m.Element.Value.(*Lobby)
-		m.Broadcast(DisconnectMsg(m.self.ID))
-		lobby.Players.Delete(m.self.ID)
-		if lobby.Players.Size() < 1 {
+		m.Lobby.Broadcast(DisconnectMsg(m.Self.ID))
+		m.Lobby.Players.Delete(m.Self.ID)
+		if m.Lobby.Players.Size() < 1 {
 			lobbies[m.game].Remove(m.Element)
 		}
 	case ConnectMsg:
 	case SelfPlayerMsg:
 		var ok bool
-		m.self, ok = Players.Load(string(msg))
+		m.Self, ok = Players.Load(string(msg))
 		if !ok {
 			break
 		}
 
 		lobby, _ := m.Element.Value.(*Lobby)
-		lobby.Players.Store(m.self.ID, m.self)
+		lobby.Players.Store(m.Self.ID, m.Self)
+		m.Self.Lobby = lobby
 
-		m.Broadcast(ConnectMsg(m.self.ID))
+		m.Lobby.Broadcast(ConnectMsg(m.Self.ID))
 		if lobby.hasMaxPlayers() {
+			lobby, _ := m.Element.Value.(*Lobby)
+			lobby.Data = m.initializeData(lobby.Players)
 			lobby.Ready = true
-			m.Broadcast(InitialReadyMsg{})
+			m.Lobby.Broadcast(InitialReadyMsg{})
 		}
 
 	}
