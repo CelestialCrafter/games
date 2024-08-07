@@ -221,7 +221,12 @@ func (m Model) View() string {
 
 	// rendering
 	help := m.help.View(m.keys)
-	multiplayer := m.multiplayer.View()
+	var multiplayer string
+	if m.multiplayer.Lobby != nil {
+		multiplayer = m.multiplayer.View()
+	} else {
+		multiplayer = ""
+	}
 
 	availableHeight := m.height
 	availableHeight -= lipgloss.Height(help)

@@ -2,6 +2,7 @@ package chess
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/CelestialCrafter/games/common"
 	"github.com/CelestialCrafter/games/multiplayer"
@@ -28,7 +29,6 @@ type KeyMap struct {
 	Help   key.Binding
 	Quit   key.Binding
 	Select key.Binding
-	Resign key.Binding
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
@@ -37,15 +37,13 @@ func (k KeyMap) ShortHelp() []key.Binding {
 		k.Help,
 		k.Quit,
 		k.Select,
-		k.Resign,
 	}
 }
 
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.Left, k.Right},
+		{k.Select, k.Up, k.Down, k.Left, k.Right},
 		{k.Save, k.Help, k.Quit},
-		{k.Select, k.Resign},
 	}
 }
 
@@ -78,12 +76,13 @@ func NewModel() Model {
 			Help:         common.NewHelpBinding(),
 			Quit:         common.NewBackBinding(),
 			Select:       key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select piece")),
-			// dont ask me why it's p
-			Resign: key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "resign game")),
 		},
 		game:           chess.NewGame(),
 		selectedSquare: chess.A1,
-		multiplayer: multiplayer.NewModel(
+	}
+
+	if *common.EnableMultiplayer {
+		m.multiplayer = multiplayer.NewModel(
 			2,
 			common.Chess.ID,
 			func(players *xsync.MapOf[string, *multiplayer.Player]) interface{} {
@@ -101,15 +100,25 @@ func NewModel() Model {
 					colors,
 				}
 			},
-		),
+		)
+	} else {
+		m.color = chess.Color(rand.Intn(2) + 1)
+		if m.color == chess.White {
+			m.selectedSquare = chess.A1
+		} else {
+			m.selectedSquare = chess.H8
+		}
+		m.ready = true
 	}
 
 	return m
 }
 
 func (m Model) Init() tea.Cmd {
-	// @TODO remove this return once multiplayer can be optional
-	return m.multiplayer.Init()
+	if m.multiplayer.Lobby != nil {
+		return m.multiplayer.Init()
+	}
+
 	return func() tea.Msg {
 		if engine == nil {
 			var err error
@@ -124,6 +133,10 @@ func (m Model) Init() tea.Cmd {
 			return common.ErrorWithBack(fmt.Errorf("couldn't initialize stockfish engine: %v", err))
 		}
 
-		return handleEngineMove(m.game)
+		if m.color == chess.Black {
+			return handleEngineMove(m.game)()
+		}
+
+		return nil
 	}
 }
