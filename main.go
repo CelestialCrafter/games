@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/CelestialCrafter/games/common"
 	"github.com/CelestialCrafter/games/db"
 )
 
@@ -16,12 +17,6 @@ const (
 	port = "2222"
 	// i have no idea what to name this
 	file = "database.db"
-)
-
-var (
-	enableSsh = flag.Bool("ssh", false, "turns into a ssh server")
-	// https://github.com/muesli/termenv/blob/51d72d34e2b9778a31aa5dd79fbdd8cdac50b4d5/profile.go#L12
-	colorProfile = flag.Int("profile", 1, "choose a color profile")
 )
 
 var programOpts = []tea.ProgramOption{tea.WithAltScreen()}
@@ -45,7 +40,7 @@ func main() {
 
 	db.DB = newDb
 
-	if *enableSsh {
+	if *common.EnableSsh {
 		startSSH()
 		return
 	}

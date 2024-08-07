@@ -68,6 +68,10 @@ type lobbyData struct {
 	startingTurn uint8
 }
 
+func randomPlayer() uint8 {
+	return uint8(rand.Intn(2)) + 1
+}
+
 func NewModel() Model {
 	board := make([][]uint8, 3)
 	for i := range board {
@@ -89,8 +93,12 @@ func NewModel() Model {
 			Help:  common.NewHelpBinding(),
 			Quit:  common.NewBackBinding(),
 		},
-		help: help.New(),
-		multiplayer: multiplayer.NewModel(
+		help:  help.New(),
+		board: board,
+	}
+
+	if *common.EnableMultiplayer {
+		m.multiplayer = multiplayer.NewModel(
 			2,
 			common.TicTacToe.ID,
 			func(players *xsync.MapOf[string, *multiplayer.Player]) interface{} {
@@ -106,11 +114,13 @@ func NewModel() Model {
 
 				return &lobbyData{
 					colors:       colors,
-					startingTurn: uint8(rand.Intn(2)) + 1,
+					startingTurn: randomPlayer(),
 				}
 			},
-		),
-		board: board,
+		)
+	} else {
+		m.player = randomPlayer()
+		m.turn = randomPlayer()
 	}
 
 	return m

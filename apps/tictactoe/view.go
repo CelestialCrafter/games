@@ -73,7 +73,14 @@ func (m Model) View() string {
 		status = winStatus(m.winner)
 	}
 
-	status = lipgloss.JoinVertical(lipgloss.Top, status, playerTextStatus(m.player))
+	var playerStatus string
+	if m.multiplayer.Lobby != nil {
+		playerStatus = playerTextStatus(m.player)
+	} else {
+		playerStatus = ""
+	}
+
+	status = lipgloss.JoinVertical(lipgloss.Top, status, playerStatus)
 
 	// render cell colors
 	board := common.RenderBoard(m.board, func(cell uint8) string {
@@ -103,7 +110,12 @@ func (m Model) View() string {
 	board = lipgloss.Place(m.width, lipgloss.Height(board), lipgloss.Center, lipgloss.Top, board)
 
 	help := m.help.View(m.keys)
-	multiplayer := m.multiplayer.View()
+	var multiplayer string
+	if m.multiplayer.Lobby != nil {
+		multiplayer = m.multiplayer.View()
+	} else {
+		multiplayer = ""
+	}
 
 	availableHeight := m.height
 	availableHeight -= lipgloss.Height(help)

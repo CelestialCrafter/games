@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/CelestialCrafter/games/common"
 	"github.com/CelestialCrafter/games/multiplayer"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -76,7 +77,7 @@ func startSSH() {
 		wish.WithMiddleware(
 			bubbletea.MiddlewareWithProgramHandler(
 				createTeaHandler,
-				termenv.Profile(*colorProfile),
+				termenv.Profile(*common.ColorProfile),
 			),
 			activeterm.Middleware(),
 			logging.Middleware(),

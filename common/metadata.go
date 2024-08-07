@@ -69,6 +69,22 @@ var (
 		}
 	})()
 
+	Snake = (func() Metadata {
+		logo := lipgloss.NewStyle().
+			Background(lipgloss.Color("70")).
+			Align(lipgloss.Center).
+			Padding(3, 6).
+			Margin(1, 2).
+			Render("Snake")
+
+		return Metadata{
+			Name:     "Snake",
+			Features: []string{"saving"},
+			Icon:     logo,
+			ID:       3,
+		}
+	})()
+
 	Saves = (func() Metadata {
 		logo := lipgloss.NewStyle().
 			Background(lipgloss.Color("244")).
@@ -80,7 +96,7 @@ var (
 		return Metadata{
 			Name: "Saves",
 			Icon: logo,
-			ID:   3,
+			ID:   4,
 		}
 	})()
 )
@@ -90,4 +106,5 @@ var Games = map[uint]Metadata{
 	TicTacToe.ID: TicTacToe,
 	Saves.ID:     Saves,
 	Chess.ID:     Chess,
+	Snake.ID:     Snake,
 }

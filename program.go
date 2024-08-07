@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/CelestialCrafter/games/common"
 	"github.com/CelestialCrafter/games/multiplayer"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -14,7 +15,7 @@ import (
 )
 
 func startProgram() {
-	lipgloss.DefaultRenderer().SetColorProfile(termenv.Profile(*colorProfile))
+	lipgloss.DefaultRenderer().SetColorProfile(termenv.Profile(*common.ColorProfile))
 
 	keyBytes, err := os.ReadFile(".ssh/id_ed25519.pub")
 	if err != nil {

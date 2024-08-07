@@ -41,6 +41,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.place(msg.position, msg.player)
 		m.turn = msg.turn
 		m.winner = m.checkGameState()
+		if m.multiplayer.Lobby == nil {
+			m.player = msg.turn
+		}
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Quit):
@@ -66,7 +69,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			m.multiplayer.Lobby.Broadcast(move)
+			if m.multiplayer.Lobby != nil {
+				m.multiplayer.Lobby.Broadcast(move)
+			} else {
+				cmds = append(cmds, func() tea.Msg {
+					return move
+				})
+			}
 		case key.Matches(msg, m.keys.Save):
 			cmds = append(cmds, func() tea.Msg {
 				bytes := bytes.Buffer{}
@@ -111,10 +120,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 	}
 
-	var multiplayerCmd tea.Cmd
-	m.multiplayer, multiplayerCmd = m.multiplayer.Update(msg)
+	if m.multiplayer.Lobby != nil {
+		var multiplayerCmd tea.Cmd
+		m.multiplayer, multiplayerCmd = m.multiplayer.Update(msg)
 
-	cmds = append(cmds, multiplayerCmd)
+		cmds = append(cmds, multiplayerCmd)
+
+	}
 
 	return m, tea.Batch(cmds...)
 }

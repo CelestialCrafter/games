@@ -53,7 +53,6 @@ var lobbies = map[uint]*list.List{
 type initializeDataFunc func(*xsync.MapOf[string, *Player]) interface{}
 
 type Model struct {
-	game           uint
 	initializeData initializeDataFunc
 	Self           *Player
 	Element        *list.Element
