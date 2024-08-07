@@ -97,6 +97,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			})
 		}
 	case saveManager.LoadMsg:
+		// disable loading if multiplayer is on
+		if m.multiplayer.Lobby != nil {
+			break
+		}
 		saveData := gameSave{}
 
 		bytes := bytes.Buffer{}

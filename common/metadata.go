@@ -47,7 +47,7 @@ var (
 
 		return Metadata{
 			Name:     "TicTacToe",
-			Features: []string{"saving"},
+			Features: []string{"saving", "multiplayer"},
 			Icon:     logo,
 			ID:       1,
 		}
@@ -63,7 +63,7 @@ var (
 
 		return Metadata{
 			Name:     "TicTacToe",
-			Features: []string{"saving"},
+			Features: []string{"saving", "multiplayer"},
 			Icon:     logo,
 			ID:       2,
 		}
@@ -79,7 +79,7 @@ var (
 
 		return Metadata{
 			Name:     "Snake",
-			Features: []string{"saving"},
+			Features: []string{"multiplayer"},
 			Icon:     logo,
 			ID:       3,
 		}
