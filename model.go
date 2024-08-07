@@ -81,14 +81,18 @@ func (m MainModel) Init() tea.Cmd {
 	return tea.Batch(m.saveManager.Init(), m.selector.Init())
 }
 
-func (m MainModel) initializeApp(id uint) tea.Cmd {
+func (m MainModel) initializeApp(msg selector.PlayMsg) tea.Cmd {
+	var loadCmd tea.Cmd
+	if msg.Load {
+		loadCmd = func() tea.Msg {
+			return saveManager.TryLoad{
+				ID: msg.ID,
+			}
+		}
+	}
+
 	return tea.Sequence(
 		m.app.Init(),
-		func() tea.Msg {
-			return saveManager.TryLoad{
-				ID: id,
-			}
-		},
 		func() tea.Msg {
 			return tea.WindowSizeMsg{
 				Width:  m.width,
@@ -98,6 +102,7 @@ func (m MainModel) initializeApp(id uint) tea.Cmd {
 		func() tea.Msg {
 			return multiplayer.SelfPlayerMsg(m.userId)
 		},
+		loadCmd,
 	)
 }
 
@@ -152,7 +157,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.app = m.NewGame(msg.ID)
 		m.currentAppId = &msg.ID
 
-		return m, m.initializeApp(msg.ID)
+		return m, m.initializeApp(msg)
 	case common.ErrorMsg:
 		if msg.Err != nil {
 			log.Error("game sent error message", "error", msg.Err)

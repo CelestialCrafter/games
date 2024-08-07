@@ -17,7 +17,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Play):
 			return m, func() tea.Msg {
 				return PlayMsg{
-					ID: common.Games[uint(m.selectedGame)].ID,
+					ID:   common.Games[uint(m.selectedGame)].ID,
+					Load: true,
 				}
 			}
 		case key.Matches(msg, m.keys.Help):

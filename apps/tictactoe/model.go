@@ -121,6 +121,7 @@ func NewModel() Model {
 	} else {
 		m.player = randomPlayer()
 		m.turn = randomPlayer()
+		m.ready = true
 	}
 
 	return m

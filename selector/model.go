@@ -26,7 +26,8 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 }
 
 type PlayMsg struct {
-	ID uint
+	ID   uint
+	Load bool
 }
 
 type Model struct {

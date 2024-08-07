@@ -11,9 +11,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type gameSave struct {
-	Board [][]uint8
-}
 type moveMsg struct {
 	position uint
 	player   uint8
@@ -80,9 +77,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, func() tea.Msg {
 				bytes := bytes.Buffer{}
 				encoder := gob.NewEncoder(&bytes)
-				err := encoder.Encode(gameSave{
-					Board: m.board,
-				})
+				err := encoder.Encode(m.board)
 
 				if err != nil {
 					return common.ErrorMsg{
@@ -101,7 +96,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.multiplayer.Lobby != nil {
 			break
 		}
-		saveData := gameSave{}
+		var saveData [][]uint8
 
 		bytes := bytes.Buffer{}
 		bytes.Write(msg.Data)
@@ -116,7 +111,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-		m.board = saveData.Board
+		m.board = saveData
 		m.winner = m.checkGameState()
 	case tea.WindowSizeMsg:
 		m.help.Width = msg.Width
