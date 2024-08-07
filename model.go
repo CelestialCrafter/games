@@ -92,13 +92,14 @@ func (m MainModel) initializeApp(msg selector.PlayMsg) tea.Cmd {
 	}
 
 	return tea.Sequence(
-		m.app.Init(),
+		// probably not a good idea to have messages before init, but it makes the ui more fluid
 		func() tea.Msg {
 			return tea.WindowSizeMsg{
 				Width:  m.width,
 				Height: m.height,
 			}
 		},
+		m.app.Init(),
 		func() tea.Msg {
 			return multiplayer.SelfPlayerMsg(m.userId)
 		},
