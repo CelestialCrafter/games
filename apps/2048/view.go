@@ -29,6 +29,7 @@ func (m Model) View() string {
 		if cell == 0 {
 			return cellStyle.Render(fmt.Sprint(cellString))
 		}
+
 		newCellStyle := cellStyle.Copy().Background(color)
 		return newCellStyle.Render(cellString)
 	})

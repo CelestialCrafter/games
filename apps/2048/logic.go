@@ -3,7 +3,7 @@ package twenty48
 import (
 	"math/rand"
 
-	"github.com/CelestialCrafter/games/common"
+	common "github.com/CelestialCrafter/games/common"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -27,6 +27,7 @@ func getEmpty(board [][]uint16) []*uint16 {
 
 func addSquare(board [][]uint16) [][]uint16 {
 	empty := getEmpty(board)
+
 	if len(empty) < 1 {
 		return board
 	}
@@ -73,7 +74,10 @@ func findDownPair(board [][]uint16) bool {
 }
 
 func checkLost(originalBoard [][]uint16) bool {
-	board := common.CreateBoard[uint16](len(originalBoard), len(originalBoard[0]))
+	board := common.CreateBoard[uint16](
+		len(originalBoard),
+		len(originalBoard[0]),
+	)
 	copy(board, originalBoard)
 
 	if len(getEmpty(board)) > 0 {

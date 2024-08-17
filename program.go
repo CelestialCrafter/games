@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/CelestialCrafter/games/common"
+	mainmodel "github.com/CelestialCrafter/games/mainModel"
 	"github.com/CelestialCrafter/games/multiplayer"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -30,7 +31,7 @@ func startProgram() {
 	keyData := hex.EncodeToString(key.Marshal())
 	id := fmt.Sprintf("%v-%v", keyType, keyData)
 
-	m := NewModel(id)
+	m := mainmodel.NewModel(id)
 	program := tea.NewProgram(m, programOpts...)
 	multiplayer.Players.Store(id, &multiplayer.Player{
 		Program: program,

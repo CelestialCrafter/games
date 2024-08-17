@@ -79,7 +79,7 @@ var (
 
 		return Metadata{
 			Name:     "Snake",
-			Features: []string{"multiplayer"},
+			Features: []string{},
 			Icon:     logo,
 			ID:       3,
 		}
