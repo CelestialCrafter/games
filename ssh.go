@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/CelestialCrafter/games/common"
-	mainmodel "github.com/CelestialCrafter/games/mainModel"
+	mainModel "github.com/CelestialCrafter/games/mainModel"
 	"github.com/CelestialCrafter/games/multiplayer"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -44,7 +44,7 @@ func createTeaHandler(sess ssh.Session) *tea.Program {
 	keyData := hex.EncodeToString(key.Marshal())
 	id := fmt.Sprintf("%v-%v", keyType, keyData)
 
-	m := mainmodel.NewModel(id)
+	m := mainModel.NewModel(id)
 	renderer := bubbletea.MakeRenderer(sess)
 	lipgloss.SetDefaultRenderer(renderer)
 	program := tea.NewProgram(m, append(bubbletea.MakeOptions(sess), programOpts...)...)
