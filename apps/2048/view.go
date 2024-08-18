@@ -17,11 +17,11 @@ var cellStyle = lipgloss.NewStyle().
 func (m Model) View() string {
 	status := ""
 
-	if m.finished {
+	if m.Finished {
 		status = styles.StatusStyle.Render("you lose!")
 	}
 
-	board := common.RenderBoard(m.board, func(cell uint16) string {
+	board := common.RenderBoard(m.Board, func(cell uint16) string {
 		index := int(math.Max(math.Log2(float64(cell)), 0))
 		color := styles.CellColors[index]
 		cellString := fmt.Sprint(cell)
