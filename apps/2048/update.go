@@ -31,7 +31,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				bytes := bytes.Buffer{}
 				encoder := gob.NewEncoder(&bytes)
 				err := encoder.Encode(gameSave{
-					Board: m.board,
+					Board: m.Board,
 				})
 
 				if err != nil {
@@ -62,8 +62,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-		m.board = saveData.Board
-		m.finished = checkLost(saveData.Board)
+		m.Board = saveData.Board
+		m.Finished = checkLost(saveData.Board)
 	case tea.WindowSizeMsg:
 		m.help.Width = msg.Width
 		m.width = msg.Width

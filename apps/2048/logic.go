@@ -151,28 +151,28 @@ func down(board boardType) {
 }
 
 func (m *Model) process(msg tea.Msg) {
-	if m.finished {
+	if m.Finished {
 		return
 	}
 
 	before := common.CreateBoard[uint16](boardWidth, boardHeight)
-	for i, row := range m.board {
+	for i, row := range m.Board {
 		copy(before[i], row)
 	}
 
 	switch {
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Up):
-		up(m.board)
+		up(m.Board)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Down):
-		down(m.board)
+		down(m.Board)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Left):
-		left(m.board)
+		left(m.Board)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Right):
-		right(m.board)
+		right(m.Board)
 	}
 
-	if !common.CompareBoards(before, m.board) {
-		addSquare(m.board)
-		m.finished = checkLost(m.board)
+	if !common.CompareBoards(before, m.Board) {
+		addSquare(m.Board)
+		m.Finished = checkLost(m.Board)
 	}
 }
