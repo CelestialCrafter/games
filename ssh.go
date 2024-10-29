@@ -58,7 +58,9 @@ func createTeaHandler(sess ssh.Session) *tea.Program {
 	go func() {
 		program.Wait()
 		multiplayer.Players.Compute(id, func(player *multiplayer.Player, loaded bool) (_ *multiplayer.Player, delete bool) {
-			multiplayer.Cleanup(player.Lobby, id)
+			if player.Lobby != nil {
+				multiplayer.Cleanup(player.Lobby, id)
+			}
 			return nil, true
 		})
 	}()
