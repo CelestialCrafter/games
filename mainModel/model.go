@@ -5,6 +5,7 @@ import (
 
 	twenty48 "github.com/CelestialCrafter/games/apps/2048"
 	"github.com/CelestialCrafter/games/apps/chess"
+	"github.com/CelestialCrafter/games/apps/snake"
 	"github.com/CelestialCrafter/games/apps/saves"
 	"github.com/CelestialCrafter/games/apps/tictactoe"
 	"github.com/CelestialCrafter/games/common"
@@ -70,6 +71,8 @@ func (m MainModel) NewGame(id uint) tea.Model {
 		return tictactoe.NewModel()
 	case common.Chess.ID:
 		return chess.NewModel()
+	case common.Snake.ID:
+		return snake.NewModel()
 	case common.Saves.ID:
 		return saves.NewModel(m.userId)
 	}
