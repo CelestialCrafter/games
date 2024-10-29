@@ -73,7 +73,7 @@ var (
 		logo := lipgloss.NewStyle().
 			Background(lipgloss.Color("70")).
 			Align(lipgloss.Center).
-			Padding(3, 6).
+			Padding(3, 5).
 			Margin(1, 2).
 			Render("Snake")
 
