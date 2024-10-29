@@ -14,7 +14,6 @@ import (
 
 const (
 	host = "0.0.0.0"
-	port = "2222"
 	// i have no idea what to name this
 	file = "database.db"
 )

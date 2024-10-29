@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -69,7 +70,7 @@ func createTeaHandler(sess ssh.Session) *tea.Program {
 }
 
 func startSSH() {
-	addr := net.JoinHostPort(host, port)
+	addr := net.JoinHostPort(host, strconv.Itoa(int(*common.Port)))
 
 	s, err := wish.NewServer(
 		wish.WithAddress(addr),
@@ -93,7 +94,7 @@ func startSSH() {
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	log.Info("Starting SSH server", "host", host, "port", port)
+	log.Info("Starting SSH server", "host", host, "port", *common.Port)
 	go func() {
 		if err = s.ListenAndServe(); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
 			log.Fatal("Could not stop server", "error", err)
