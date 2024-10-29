@@ -55,6 +55,7 @@ type Model struct {
 	snake []Point
 	direction Point
 	inputBuffer []tea.KeyMsg
+	score int
 }
 
 func NewModel() Model {

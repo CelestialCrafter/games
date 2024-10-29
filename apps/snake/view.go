@@ -1,6 +1,9 @@
 package snake
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/CelestialCrafter/games/common"
 	"github.com/CelestialCrafter/games/styles"
 	"github.com/charmbracelet/lipgloss"
@@ -13,9 +16,13 @@ Align(lipgloss.Center)
 func (m Model) View() string {
 	status := ""
 
+	statusSlice := []string{fmt.Sprintf("%d points", m.score)}
+
 	if m.Finished {
-		status = styles.StatusStyle.Render("you lose!")
+		statusSlice = append(statusSlice, "you lose!")
 	}
+
+	status = styles.StatusStyle.Render(strings.Join(statusSlice, " • "))
 
 	snakedBoard := common.CreateBoard[uint8](boardWidth, boardHeight)
 	for i := range m.Board {

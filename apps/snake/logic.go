@@ -119,6 +119,7 @@ func (m *Model) process(lastTick time.Time) {
 			ateApple = true
 			m.Board = addApple(m.Board)
 			m.progress++
+			m.score++
 		}
 
 		m.snake = append([]Point{newHead}, m.snake...)
