@@ -15,7 +15,7 @@ const (
 )
 
 const tickRate = time.Millisecond * 100
-const snakeSpeed = 10
+const snakeSpeed = 5
 
 const (
 	empty = iota
@@ -44,18 +44,18 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 }
 
 type Model struct {
-	keys     KeyMap
-	help     help.Model
-	Board    boardType
-	Finished bool
-	height   int
-	width    int
-	progress float64
-	lastTick time.Time
-	snake []Point
-	direction Point
+	keys        KeyMap
+	help        help.Model
+	Board       boardType
+	Finished    bool
+	height      int
+	width       int
+	progress    float64
+	lastTick    time.Time
+	snake       []Point
+	direction   Point
 	inputBuffer []tea.KeyMsg
-	score int
+	score       int
 }
 
 func NewModel() Model {
@@ -69,11 +69,11 @@ func NewModel() Model {
 			Help:         common.NewHelpBinding(),
 			Quit:         common.NewBackBinding(),
 		},
-		help:  help.New(),
-		Board: board,
-		snake: []Point{{X: 10, Y: 10}},
+		help:        help.New(),
+		Board:       board,
+		snake:       []Point{{X: 10, Y: 10}},
 		inputBuffer: make([]tea.KeyMsg, 0),
-		lastTick: time.Now(),
+		lastTick:    time.Now(),
 	}
 }
 

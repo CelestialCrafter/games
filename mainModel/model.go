@@ -5,8 +5,8 @@ import (
 
 	twenty48 "github.com/CelestialCrafter/games/apps/2048"
 	"github.com/CelestialCrafter/games/apps/chess"
-	"github.com/CelestialCrafter/games/apps/snake"
 	"github.com/CelestialCrafter/games/apps/saves"
+	"github.com/CelestialCrafter/games/apps/snake"
 	"github.com/CelestialCrafter/games/apps/tictactoe"
 	"github.com/CelestialCrafter/games/common"
 	"github.com/CelestialCrafter/games/multiplayer"

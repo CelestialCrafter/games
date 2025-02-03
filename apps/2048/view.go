@@ -15,11 +15,11 @@ var cellStyle = lipgloss.NewStyle().
 	Align(lipgloss.Center)
 
 func (m Model) View() string {
-	status := ""
-
+	status := fmt.Sprint(m.points, " points")
 	if m.Finished {
-		status = styles.StatusStyle.Render("you lose!")
+		status += " • you lose!"
 	}
+	status = styles.StatusStyle.Render(status)
 
 	board := common.RenderBoard(m.Board, func(cell uint16) string {
 		index := int(math.Max(math.Log2(float64(cell)), 0))

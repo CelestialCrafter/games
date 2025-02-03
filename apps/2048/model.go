@@ -36,6 +36,7 @@ type Model struct {
 	keys     KeyMap
 	help     help.Model
 	Board    boardType
+	points   int
 	Finished bool
 	height   int
 	width    int

@@ -33,7 +33,7 @@ func TestLose(t *testing.T) {
 	}
 }
 
-func testDirection(t *testing.T, display string, board boardType, want boardType, movement func(boardType)) {
+func testDirection(t *testing.T, display string, board boardType, want boardType, movement func(boardType) int) {
 	movement(board)
 	if !reflect.DeepEqual(board, want) {
 		t.Errorf("%s = %v; want %v", display, board, want)

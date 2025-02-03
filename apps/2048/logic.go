@@ -109,45 +109,52 @@ func push(board [][]uint16) {
 	}
 }
 
-func merge(board [][]uint16) {
+func merge(board [][]uint16) (points int) {
 	for i := 0; i < len(board); i++ {
 		for j := 0; j < len(board)-1; j++ {
 			current := &board[i][j]
 			next := &board[i][j+1]
 			if *current == *next && *current != 0 {
 				*current = *current * 2
+				points += int(*current)
 				*next = 0
 			}
 		}
 	}
+
+	return
 }
 
-func up(board boardType) {
+func up(board boardType) int {
 	push(board)
-	merge(board)
+	p := merge(board)
 	push(board)
+	return p
 }
 
-func right(board boardType) {
+func right(board boardType) int {
 	rotateN90(board)
-	up(board)
+	p := up(board)
 	rotate90(board)
+	return p
 }
 
-func left(board boardType) {
+func left(board boardType) int {
 	rotate90(board)
-	up(board)
+	p := up(board)
 	rotateN90(board)
+	return p
 }
 
-func down(board boardType) {
+func down(board boardType) int {
 	for range 2 {
 		rotate90(board)
 	}
-	up(board)
+	p := up(board)
 	for range 2 {
 		rotateN90(board)
 	}
+	return p
 }
 
 func (m *Model) process(msg tea.Msg) {
@@ -160,16 +167,18 @@ func (m *Model) process(msg tea.Msg) {
 		copy(before[i], row)
 	}
 
+	var p int
 	switch {
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Up):
-		up(m.Board)
+		p = up(m.Board)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Down):
-		down(m.Board)
+		p = down(m.Board)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Left):
-		left(m.Board)
+		p = left(m.Board)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Right):
-		right(m.Board)
+		p = right(m.Board)
 	}
+	m.points += p
 
 	if !common.CompareBoards(before, m.Board) {
 		addSquare(m.Board)
