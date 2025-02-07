@@ -15,7 +15,7 @@ const (
 )
 
 const tickRate = time.Millisecond * 100
-const snakeSpeed = 5
+const baseSnakeSpeed = 5
 
 const (
 	empty = iota

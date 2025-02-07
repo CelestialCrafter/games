@@ -1,6 +1,7 @@
 package snake
 
 import (
+	"math"
 	"math/rand"
 	"time"
 
@@ -99,7 +100,8 @@ func (m *Model) process(lastTick time.Time) {
 	m.direction = m.nextDirection()
 
 	deltaTime := time.Since(lastTick)
-	m.progress += deltaTime.Seconds() * snakeSpeed
+	speedMulti := 1.0 + math.Log(float64(len(m.snake)))*0.2
+	m.progress += deltaTime.Seconds() * baseSnakeSpeed * speedMulti
 
 	for m.progress >= 1 {
 		m.progress--
@@ -128,4 +130,3 @@ func (m *Model) process(lastTick time.Time) {
 		}
 	}
 }
-
