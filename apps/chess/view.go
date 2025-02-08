@@ -145,7 +145,7 @@ func (m Model) View() string {
 	}
 
 	i := -1
-	board := common.RenderBoard(sliceChessBoard, func(piece *pieceSquare) string {
+	board := common.RenderBoard(sliceChessBoard, func(_ [2]int, piece *pieceSquare) string {
 		i++
 		var changed bool
 		newCellStyle := cellStyle.Copy()

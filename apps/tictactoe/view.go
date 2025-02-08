@@ -83,7 +83,7 @@ func (m Model) View() string {
 	status = lipgloss.JoinVertical(lipgloss.Top, status, playerStatus)
 
 	// render cell colors
-	board := common.RenderBoard(m.board, func(cell uint8) string {
+	board := common.RenderBoard(m.board, func(_ [2]int, cell uint8) string {
 		newCellStyle := cellStyle.Copy()
 
 		if cell == 1 {

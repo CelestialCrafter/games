@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	twenty48 "github.com/CelestialCrafter/games/apps/2048"
+	blockblast "github.com/CelestialCrafter/games/apps/block_blast"
 	"github.com/CelestialCrafter/games/apps/chess"
 	"github.com/CelestialCrafter/games/apps/snake"
 	"github.com/CelestialCrafter/games/apps/tictactoe"
@@ -69,6 +70,8 @@ func (m MainModel) NewGame(id uint) tea.Model {
 		return chess.NewModel()
 	case common.Snake.ID:
 		return snake.NewModel()
+	case common.BlockBlast.ID:
+		return blockblast.NewModel()
 	}
 
 	return EmptyModel{}

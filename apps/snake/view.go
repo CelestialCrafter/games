@@ -9,9 +9,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var cellStyle = lipgloss.NewStyle().
-Width(2).
-Align(lipgloss.Center)
+var cellStyle = lipgloss.NewStyle().Width(2)
 
 func (m Model) View() string {
 	status := ""
@@ -26,14 +24,14 @@ func (m Model) View() string {
 
 	snakedBoard := common.CreateBoard[uint8](boardWidth, boardHeight)
 	for i := range m.Board {
-	    copy(snakedBoard[i], m.Board[i])
+		copy(snakedBoard[i], m.Board[i])
 	}
 
 	for _, point := range m.snake {
 		snakedBoard[point.X][point.Y] = snake
 	}
 
-	board := common.RenderBoard(snakedBoard, func(cell uint8) string {
+	board := common.RenderBoard(snakedBoard, func(_ [2]int, cell uint8) string {
 		if cell == empty {
 			return cellStyle.Render()
 		}
@@ -46,16 +44,16 @@ func (m Model) View() string {
 		}
 
 		return cellStyle.
-		Copy().
-		Background(color).
-		Render()
+			Copy().
+			Background(color).
+			Render()
 	})
 
 	board = lipgloss.
-	NewStyle().
-	BorderForeground(styles.Colors.Accent).
-	Border(lipgloss.RoundedBorder()).
-	Render(board)
+		NewStyle().
+		BorderForeground(styles.Colors.Accent).
+		Border(lipgloss.RoundedBorder()).
+		Render(board)
 
 	board = lipgloss.JoinVertical(lipgloss.Top, board, status)
 	board = lipgloss.Place(m.width, lipgloss.Height(board), lipgloss.Center, lipgloss.Top, board)

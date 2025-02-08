@@ -34,9 +34,9 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 type Model struct {
 	keys     KeyMap
 	help     help.Model
-	Board    boardType
+	board    boardType
 	points   int
-	Finished bool
+	finished bool
 	height   int
 	width    int
 }
@@ -44,10 +44,8 @@ type Model struct {
 func NewModel() Model {
 	board := common.CreateBoard[uint16](boardWidth, boardHeight)
 
-	for i := range 2 {
-		_ = i
-
-		// this should never error
+	for range 2 {
+		// this should never fail
 		board = addSquare(board)
 	}
 
@@ -58,7 +56,7 @@ func NewModel() Model {
 			Quit:         common.NewBackBinding(),
 		},
 		help:  help.New(),
-		Board: board,
+		board: board,
 	}
 }
 

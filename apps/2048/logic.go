@@ -37,28 +37,14 @@ func addSquare(board [][]uint16) [][]uint16 {
 	return board
 }
 
-func reverse(matrix [][]uint16) {
-	for i, j := 0, len(matrix)-1; i < j; i, j = i+1, j-1 {
-		matrix[i], matrix[j] = matrix[j], matrix[i]
-	}
-}
-
-func transpose(matrix [][]uint16) {
-	for i := 0; i < len(matrix); i++ {
-		for j := 0; j < i; j++ {
-			matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
-		}
-	}
-}
-
 func rotate90(matrix [][]uint16) {
-	transpose(matrix)
-	reverse(matrix)
+	common.TransposeBoard(matrix)
+	common.ReverseBoard(matrix)
 }
 
 func rotateN90(matrix [][]uint16) {
-	reverse(matrix)
-	transpose(matrix)
+	common.ReverseBoard(matrix)
+	common.TransposeBoard(matrix)
 }
 
 func findDownPair(board [][]uint16) bool {
@@ -158,30 +144,30 @@ func down(board boardType) int {
 }
 
 func (m *Model) process(msg tea.Msg) {
-	if m.Finished {
+	if m.finished {
 		return
 	}
 
 	before := common.CreateBoard[uint16](boardWidth, boardHeight)
-	for i, row := range m.Board {
+	for i, row := range m.board {
 		copy(before[i], row)
 	}
 
 	var p int
 	switch {
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Up):
-		p = up(m.Board)
+		p = up(m.board)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Down):
-		p = down(m.Board)
+		p = down(m.board)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Left):
-		p = left(m.Board)
+		p = left(m.board)
 	case key.Matches(msg.(tea.KeyMsg), m.keys.Right):
-		p = right(m.Board)
+		p = right(m.board)
 	}
 	m.points += p
 
-	if !common.CompareBoards(before, m.Board) {
-		addSquare(m.Board)
-		m.Finished = checkLost(m.Board)
+	if !common.CompareBoards(before, m.board) {
+		addSquare(m.board)
+		m.finished = checkLost(m.board)
 	}
 }
