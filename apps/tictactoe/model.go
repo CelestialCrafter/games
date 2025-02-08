@@ -22,13 +22,12 @@ type KeyMap struct {
 	Eight key.Binding
 	Nine  key.Binding
 
-	Save key.Binding
 	Help key.Binding
 	Quit key.Binding
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Save, k.Help, k.Quit}
+	return []key.Binding{k.Help, k.Quit}
 }
 
 func (k KeyMap) FullHelp() [][]key.Binding {
@@ -46,7 +45,7 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 			k.Eight,
 			k.Nine,
 		},
-		{k.Save, k.Help, k.Quit},
+		{k.Help, k.Quit},
 	}
 }
 
@@ -89,7 +88,6 @@ func NewModel() Model {
 			Seven: key.NewBinding(key.WithKeys("7"), key.WithHelp("7", "seven")),
 			Eight: key.NewBinding(key.WithKeys("8"), key.WithHelp("8", "eight")),
 			Nine:  key.NewBinding(key.WithKeys("9"), key.WithHelp("9", "nine")),
-			Save:  key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "save")),
 			Help:  common.NewHelpBinding(),
 			Quit:  common.NewBackBinding(),
 		},

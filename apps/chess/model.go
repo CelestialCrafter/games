@@ -72,7 +72,6 @@ func NewModel() Model {
 		help: help.New(),
 		keys: KeyMap{
 			ArrowsKeyMap: common.NewArrowsKeyMap(),
-			Save:         common.NewSaveBinding(),
 			Help:         common.NewHelpBinding(),
 			Quit:         common.NewBackBinding(),
 			Select:       key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select piece")),

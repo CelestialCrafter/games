@@ -65,7 +65,6 @@ func NewModel() Model {
 	return Model{
 		keys: KeyMap{
 			ArrowsKeyMap: common.NewArrowsKeyMap(),
-			Save:         common.NewSaveBinding(),
 			Help:         common.NewHelpBinding(),
 			Quit:         common.NewBackBinding(),
 		},

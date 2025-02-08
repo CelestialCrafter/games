@@ -11,4 +11,3 @@ a collection of games playable over ssh!
 
 ## other
 -  Game selector
--  Save manager

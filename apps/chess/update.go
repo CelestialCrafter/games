@@ -1,15 +1,12 @@
 package chess
 
 import (
-	"bytes"
-	"encoding/gob"
 	"fmt"
 	"math"
 	"time"
 
 	"github.com/CelestialCrafter/games/common"
 	"github.com/CelestialCrafter/games/multiplayer"
-	"github.com/CelestialCrafter/games/saveManager"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/notnil/chess"
@@ -69,25 +66,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.Select):
 			cmds = append(cmds, m.handleSelection())
-		case key.Matches(msg, m.keys.Save):
-			cmds = append(cmds, func() tea.Msg {
-				bytes := bytes.Buffer{}
-				encoder := gob.NewEncoder(&bytes)
-				err := encoder.Encode(gameSave{
-					FEN:   m.game.FEN(),
-					Color: m.color,
-				})
-				if err != nil {
-					return common.ErrorMsg{
-						Err: err,
-					}
-				}
-
-				return saveManager.SaveMsg{
-					Data: bytes.Bytes(),
-					ID:   common.Chess.ID,
-				}
-			})
 
 		// make sure this is the last case
 		case m.color == chess.White:
@@ -120,38 +98,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.backwardsFile()
 			}
 		}
-
-	case saveManager.LoadMsg:
-		// disable loading if multiplayer is on
-		if m.multiplayer.Lobby != nil {
-			break
-		}
-		var saveData gameSave
-
-		bytes := bytes.Buffer{}
-		bytes.Write(msg.Data)
-
-		decoder := gob.NewDecoder(&bytes)
-		err := decoder.Decode(&saveData)
-		if err != nil {
-			return m, func() tea.Msg {
-				return common.ErrorMsg{
-					Err: err,
-				}
-			}
-		}
-
-		fen, err := chess.FEN(saveData.FEN)
-		if err != nil {
-			return m, func() tea.Msg {
-				return common.ErrorMsg{
-					Err: err,
-				}
-			}
-		}
-
-		m.game = chess.NewGame(fen)
-		m.color = saveData.Color
 
 	case tea.WindowSizeMsg:
 		m.help.Width = msg.Width

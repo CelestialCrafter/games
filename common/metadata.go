@@ -84,27 +84,11 @@ var (
 			ID:       3,
 		}
 	})()
-
-	Saves = (func() Metadata {
-		logo := lipgloss.NewStyle().
-			Background(lipgloss.Color("244")).
-			Align(lipgloss.Center).
-			Padding(3, 5).
-			Margin(1, 2).
-			Render("Saves")
-
-		return Metadata{
-			Name: "Saves",
-			Icon: logo,
-			ID:   4,
-		}
-	})()
 )
 
 var Games = map[uint]Metadata{
 	Twenty48.ID:  Twenty48,
 	TicTacToe.ID: TicTacToe,
-	Saves.ID:     Saves,
 	Chess.ID:     Chess,
 	Snake.ID:     Snake,
 }

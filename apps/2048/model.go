@@ -16,19 +16,18 @@ type boardType [][]uint16
 
 type KeyMap struct {
 	common.ArrowsKeyMap
-	Save key.Binding
 	Help key.Binding
 	Quit key.Binding
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Save, k.Help, k.Quit}
+	return []key.Binding{k.Help, k.Quit}
 }
 
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Up, k.Down, k.Left, k.Right},
-		{k.Save, k.Help, k.Quit},
+		{k.Help, k.Quit},
 	}
 }
 
@@ -55,7 +54,6 @@ func NewModel() Model {
 	return Model{
 		keys: KeyMap{
 			ArrowsKeyMap: common.NewArrowsKeyMap(),
-			Save:         common.NewSaveBinding(),
 			Help:         common.NewHelpBinding(),
 			Quit:         common.NewBackBinding(),
 		},

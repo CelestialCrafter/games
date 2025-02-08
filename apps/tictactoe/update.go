@@ -1,12 +1,8 @@
 package tictactoe
 
 import (
-	"bytes"
-	"encoding/gob"
-
 	"github.com/CelestialCrafter/games/common"
 	"github.com/CelestialCrafter/games/multiplayer"
-	"github.com/CelestialCrafter/games/saveManager"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -73,46 +69,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return move
 				})
 			}
-		case key.Matches(msg, m.keys.Save):
-			cmds = append(cmds, func() tea.Msg {
-				bytes := bytes.Buffer{}
-				encoder := gob.NewEncoder(&bytes)
-				err := encoder.Encode(m.board)
-
-				if err != nil {
-					return common.ErrorMsg{
-						Err: err,
-					}
-				}
-
-				return saveManager.SaveMsg{
-					Data: bytes.Bytes(),
-					ID:   common.TicTacToe.ID,
-				}
-			})
 		}
-	case saveManager.LoadMsg:
-		// disable loading if multiplayer is on
-		if m.multiplayer.Lobby != nil {
-			break
-		}
-		var saveData [][]uint8
-
-		bytes := bytes.Buffer{}
-		bytes.Write(msg.Data)
-		decoder := gob.NewDecoder(&bytes)
-		err := decoder.Decode(&saveData)
-
-		if err != nil {
-			return m, func() tea.Msg {
-				return common.ErrorMsg{
-					Err: err,
-				}
-			}
-		}
-
-		m.board = saveData
-		m.winner = m.checkGameState()
 	case tea.WindowSizeMsg:
 		m.help.Width = msg.Width
 		m.width = msg.Width

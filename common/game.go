@@ -28,10 +28,6 @@ func NewHelpBinding() key.Binding {
 	return key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help"))
 }
 
-func NewSaveBinding() key.Binding {
-	return key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "save"))
-}
-
 func NewResetBinding() key.Binding {
 	return key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "reset"))
 }
