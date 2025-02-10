@@ -44,16 +44,20 @@ func (m Model) View() string {
 	board = lipgloss.NewStyle().BorderForeground(styles.Colors.Accent).Border(lipgloss.RoundedBorder()).Render(board)
 
 	colors := []lipgloss.Color{styles.Colors.Primary, styles.Colors.Secondary, styles.Colors.Accent}
-	pieces := make([]string, len(m.pieces))
+	pieces := []string{}
 	for i, piece := range m.pieces {
+		if i == m.piece {
+			continue
+		}
+
 		color := colors[i%len(colors)]
-		pieces[i] = common.RenderBoard(piece, func(_ [2]int, cell bool) string {
+		pieces = append(pieces, common.RenderBoard(piece, func(_ [2]int, cell bool) string {
 			if cell {
 				return cellStyle.Copy().Background(color).Render()
 			} else {
 				return cellStyle.Render()
 			}
-		})
+		}))
 	}
 
 	combinedPieces := strings.Join(pieces, "\n\n")
